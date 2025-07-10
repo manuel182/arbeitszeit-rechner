@@ -731,6 +731,45 @@
             updateDaySummary(event.target.dataset.day);
         }
 
+        function validateTimeBlocks(timeBlocks) {
+            if (timeBlocks.length <= 1) return { valid: true };
+            
+            // Konvertiere alle Zeiten zu Minuten und sortiere nach Startzeit
+            const timeRanges = timeBlocks.map(block => ({
+                start: timeToMinutes(block.start),
+                end: timeToMinutes(block.end),
+                startStr: block.start,
+                endStr: block.end
+            })).sort((a, b) => a.start - b.start);
+            
+            // Prüfe auf Überschneidungen
+            for (let i = 0; i < timeRanges.length - 1; i++) {
+                const current = timeRanges[i];
+                const next = timeRanges[i + 1];
+                
+                // Behandle Zeiten über Mitternacht
+                let currentEnd = current.end;
+                let nextStart = next.start;
+                
+                if (current.end < current.start) {
+                    currentEnd += 1440; // 24 Stunden hinzufügen
+                }
+                if (next.end < next.start) {
+                    nextStart += 1440; // 24 Stunden hinzufügen
+                }
+                
+                // Prüfe Überschneidung
+                if (currentEnd > nextStart) {
+                    return {
+                        valid: false,
+                        message: `⚠️ Zeitüberschneidung erkannt!\n\nArbeitszeit 1: ${current.startStr} - ${current.endStr}\nArbeitszeit 2: ${next.startStr} - ${next.endStr}\n\nBitte korrigieren Sie die Zeiten so, dass sie sich nicht überschneiden.`
+                    };
+                }
+            }
+            
+            return { valid: true };
+        }
+
         function getTimeFromInput(inputId) {
             const input = document.getElementById(inputId);
             return input ? input.value : '';
@@ -1241,6 +1280,13 @@
                 return;
             }
 
+            // Validiere Zeitüberschneidungen
+            const validation = validateTimeBlocks(timeBlocks);
+            if (!validation.valid) {
+                alert(validation.message);
+                return;
+            }
+
             const result = calculateDayWorkTime(timeBlocks, day, isHoliday, hasPause);
             displayResults(result);
         }
@@ -1557,6 +1603,15 @@
                 }
             }
             
+            // Validiere Zeitüberschneidungen
+            if (timeBlocks.length > 1) {
+                const validation = validateTimeBlocks(timeBlocks);
+                if (!validation.valid) {
+                    summaryDiv.innerHTML = `<span style="color: red; font-weight: bold;">❌ Zeitüberschneidung erkannt!</span><br><span style="font-size: 0.8rem;">Bitte korrigieren Sie die Arbeitszeiten.</span>`;
+                    return;
+                }
+            }
+            
             if (timeBlocks.length === 0 && !dienst1 && !dienst2 && einsatzpauschalen === 0 && !diaeten && !zeitausgleich && !zeitFirma) {
                 summaryDiv.innerHTML = 'Keine Arbeitszeit eingetragen';
                 return;
@@ -1578,13 +1633,16 @@
                     summaryText += `<br>Pause: ${minutesToHours(result.display_break_time || result.break_time)} h`;
                 }
                 
-                // Montagezulage berechnen (Gesamtstunden - Zeit in der Firma)
+                // Montagezulage berechnen (Gesamtstunden - Zeit in der Firma, oder gesamte Arbeitszeit wenn keine Firmenzeit)
                 if (zeitFirma) {
                     const zeitFirmaMinuten = timeToMinutes(zeitFirma);
                     const montagezulageMinuten = workMinutes - zeitFirmaMinuten;
                     if (montagezulageMinuten > 0) {
                         summaryText += `<br>Montagezulage: ${minutesToHours(montagezulageMinuten)} h`;
                     }
+                } else if (workMinutes > 0) {
+                    // Keine Zeit in der Firma eingetragen = gesamte Arbeitszeit ist Montagezulage
+                    summaryText += `<br>Montagezulage: ${minutesToHours(workMinutes)} h`;
                 }
             }
             
@@ -1658,6 +1716,15 @@
                         }
                     }
                     
+                    // Validiere Zeitüberschneidungen - überspringe bei Fehlern
+                    if (timeBlocks.length > 1) {
+                        const validation = validateTimeBlocks(timeBlocks);
+                        if (!validation.valid) {
+                            // Überspringe diesen Tag bei der Berechnung
+                            continue;
+                        }
+                    }
+                    
                     // Arbeitszeit berechnen
                     if (timeBlocks.length > 0) {
                         const result = calculateDayWorkTime(timeBlocks, dayData.weekday, dayData.isHoliday, dayData.hasPause);
@@ -1678,6 +1745,9 @@
                             if (montagezulageMinuten > 0) {
                                 monthTotal.totalMontagezulage += montagezulageMinuten;
                             }
+                        } else if (workMinutes > 0) {
+                            // Keine Zeit in der Firma = gesamte Arbeitszeit ist Montagezulage
+                            monthTotal.totalMontagezulage += workMinutes;
                         }
                         
                         monthTotal.workDays++;
@@ -1792,37 +1862,37 @@
             const printTableDiv = document.getElementById('printTable');
             
             let tableHTML = `
-                <div style="max-width: 210mm; margin: 0 auto; padding: 20mm; font-family: Arial, sans-serif; font-size: 11pt; background: white;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <h2 style="margin: 0; font-size: 16pt; font-weight: bold;">STUNDENLISTE</h2>
-                        <div style="font-size: 9pt; margin-top: 5px;">(Mittagspause von 12:00 bis 12:45 Uhr)</div>
+                <div style="max-width: 210mm; margin: 0 auto; padding: 15mm; font-family: Arial, sans-serif; font-size: 10pt; background: white;">
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <h2 style="margin: 0; font-size: 14pt; font-weight: bold;">STUNDENLISTE</h2>
+                        <div style="font-size: 8pt; margin-top: 3px;">(Mittagspause von 12:00 bis 12:45 Uhr)</div>
                     </div>
                     
-                    <div style="margin-bottom: 15px; display: flex; justify-content: space-between;">
+                    <div style="margin-bottom: 10px; display: flex; justify-content: space-between;">
                         <div>
-                            <strong>NAME:</strong> <span style="border-bottom: 1px solid black; padding-bottom: 2px; min-width: 200px; display: inline-block;">${employeeName}</span>
+                            <strong>NAME:</strong> <span style="border-bottom: 1px solid black; padding-bottom: 1px; min-width: 180px; display: inline-block;">${employeeName}</span>
                         </div>
                         <div>
-                            <strong>Monat/Jahr:</strong> <span style="border-bottom: 1px solid black; padding-bottom: 2px; min-width: 150px; display: inline-block;">${new Date(monthInput + '-01').toLocaleDateString('de-DE', { month: '2-digit', year: 'numeric' }).replace('.', '/')}</span>
+                            <strong>Monat/Jahr:</strong> <span style="border-bottom: 1px solid black; padding-bottom: 1px; min-width: 120px; display: inline-block;">${new Date(monthInput + '-01').toLocaleDateString('de-DE', { month: '2-digit', year: 'numeric' }).replace('.', '/')}</span>
                         </div>
                     </div>
                     
-                    <table style="width: 100%; border-collapse: collapse; border: 2px solid black; font-size: 8pt;">
+                    <table style="width: 100%; border-collapse: collapse; border: 2px solid black; font-size: 7pt;">
                         <thead>
                             <tr style="border-bottom: 2px solid black;">
-                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 7%; background: #f0f0f0;">Datum</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 7%; background: #f0f0f0;">VON</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 7%; background: #f0f0f0;">BIS</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 7%; background: #f0f0f0;">GESAMT</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 6%; background: #f0f0f0;">Normal</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 6%; background: #f0f0f0;">50%</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 6%; background: #f0f0f0;">100%</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 6%; background: #f0f0f0;">100% frei</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 8%; background: #f0f0f0;">Dienst</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 8%; background: #f0f0f0;">Einsatzpauschalen</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 8%; background: #f0f0f0;">Diäten</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 8%; background: #f0f0f0;">Zeitausgleich</th>
-                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 8%; background: #f0f0f0;">Montagezulage</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0; font-size: 7pt;">Datum</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0; font-size: 7pt;">VON</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0; font-size: 7pt;">BIS</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0; font-size: 7pt;">GESAMT</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 7pt;">Normal</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 7pt;">50%</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 7pt;">100%</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 7pt;">100% frei</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Dienst</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Einsatzpauschalen</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Diäten</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Zeitausgleich</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Montagezulage</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1891,6 +1961,9 @@
                                 if (montagezulageMinuten > 0) {
                                     montagezulageText = minutesToHours(montagezulageMinuten);
                                 }
+                            } else if (workMinutes > 0) {
+                                // Keine Zeit in der Firma = gesamte Arbeitszeit ist Montagezulage
+                                montagezulageText = minutesToHours(workMinutes);
                             }
                         }
                     }
@@ -1914,63 +1987,65 @@
                 }
                 
                 tableHTML += `
-                    <tr style="height: 20px;">
-                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${dateStr}</td>
-                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${monthData[day] && monthData[day].krankUrlaub ? '' : (timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[0] : '')}</td>
-                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${monthData[day] && monthData[day].krankUrlaub ? '' : (timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[1] : '')}</td>
-                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${totalHours}</td>
-                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${normal}</td>
-                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${surcharge50}</td>
-                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${taxed100}</td>
-                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${taxFree100}</td>
-                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${dienstText}</td>
-                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${einsatzpauschalenText}</td>
-                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${diaetenText}</td>
-                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${zeitausgleichText}</td>
-                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${montagezulageText}</td>
+                    <tr style="height: 18px;">
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${dateStr}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt;">${monthData[day] && monthData[day].krankUrlaub ? '' : (timeDisplay.includes(',') ? 'mehrere' : (timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[0] : ''))}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt;">${monthData[day] && monthData[day].krankUrlaub ? '' : (timeDisplay.includes(',') ? 'Zeiten' : (timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[1] : ''))}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${totalHours}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${normal}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${surcharge50}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${taxed100}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${taxFree100}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt;">${dienstText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${einsatzpauschalenText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt;">${diaetenText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${zeitausgleichText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${montagezulageText}</td>
                     </tr>
                 `;
+                
+                // Wenn mehrere Arbeitszeiten vorhanden sind, füge eine Detail-Zeile hinzu
+                if (timeDisplay.includes(',') && !monthData[day]?.krankUrlaub) {
+                    tableHTML += `
+                        <tr style="height: 12px; background: #f8f8f8;">
+                            <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt; font-style: italic;" colspan="13">
+                                Zeiten: ${timeDisplay}
+                            </td>
+                        </tr>
+                    `;
+                }
             }
 
             tableHTML += `
                         </tbody>
                         <tfoot>
                             <tr style="background: #f0f0f0; font-weight: bold; border-top: 2px solid black;">
-                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">SUMME</td>
-                                <td style="border: 1px solid black; padding: 3px; text-align: center;">-</td>
-                                <td style="border: 1px solid black; padding: 3px; text-align: center;">-</td>
-                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalWorkTime)}</td>
-                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.normal)}</td>
-                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.surcharge_50)}</td>
-                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.taxed_100)}</td>
-                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.tax_free_100)}</td>
-                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 6pt;">
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">SUMME</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center;">-</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center;">-</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalWorkTime)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.normal)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.surcharge_50)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.taxed_100)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.tax_free_100)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 6pt;">
                                     ${monthTotal.dienst1Count > 0 ? `1.D: ${monthTotal.dienst1Count}x` : ''}
                                     ${monthTotal.dienst1Count > 0 && monthTotal.dienst2Count > 0 ? '<br>' : ''}
                                     ${monthTotal.dienst2Count > 0 ? `2.D: ${monthTotal.dienst2Count}x` : ''}
                                 </td>
-                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${monthTotal.totalEinsatzpauschalen}</td>
-                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 6pt;">
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${monthTotal.totalEinsatzpauschalen}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 6pt;">
                                     ${monthTotal.kleineDiaetCount > 0 ? `kl: ${monthTotal.kleineDiaetCount}` : ''}
                                     ${(monthTotal.kleineDiaetCount > 0 && monthTotal.mittlereDiaetCount > 0) ? '<br>' : ''}
                                     ${monthTotal.mittlereDiaetCount > 0 ? `mi: ${monthTotal.mittlereDiaetCount}` : ''}
                                     ${((monthTotal.kleineDiaetCount > 0 || monthTotal.mittlereDiaetCount > 0) && monthTotal.grosseDiaetCount > 0) ? '<br>' : ''}
                                     ${monthTotal.grosseDiaetCount > 0 ? `gr: ${monthTotal.grosseDiaetCount}` : ''}
                                 </td>
-                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalZeitausgleich)}</td>
-                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalMontagezulage)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalZeitausgleich)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalMontagezulage)}</td>
                             </tr>
                         </tfoot>
                     </table>
-                    
-                    <div style="margin-top: 30px; display: flex; justify-content: space-between;">
-                        <div style="border-bottom: 1px solid black; width: 200px; text-align: center; padding-bottom: 5px;">
-                            <div style="margin-top: 10px; font-size: 9pt;">Unterschrift Arbeitgeber</div>
-                        </div>
-                        <div style="border-bottom: 1px solid black; width: 200px; text-align: center; padding-bottom: 5px;">
-                            <div style="margin-top: 10px; font-size: 9pt;">Unterschrift Arbeitnehmer</div>
-                        </div>
-                    </div>
                 </div>
             `;
 
@@ -1984,6 +2059,17 @@
                 return;
             }
             
+            const employeeName = document.getElementById('employeeName').value;
+            const monthInput = document.getElementById('selectedMonth').value;
+            
+            // Erstelle Dateinamen im Format "JahrMonat_Name"
+            const [year, month] = monthInput.split('-');
+            const fileName = `${year}${month.padStart(2, '0')}_${employeeName.replace(/[^a-zA-Z0-9äöüß\s]/g, '').trim()}`;
+            
+            // Setze den Dokumenttitel für die PDF
+            const originalTitle = document.title;
+            document.title = fileName;
+            
             printTableDiv.style.display = 'block';
             
             // Temporäre Styles für den Druck
@@ -1992,18 +2078,44 @@
                 <style media="print">
                     body * { visibility: hidden; }
                     #printTable, #printTable * { visibility: visible; }
-                    #printTable { position: absolute; left: 0; top: 0; }
-                    @page { margin: 0.5cm; }
+                    #printTable { 
+                        position: absolute; 
+                        left: 0; 
+                        top: 0; 
+                        width: 100%;
+                        max-height: 100vh;
+                        overflow: hidden;
+                    }
+                    @page { 
+                        margin: 10mm; 
+                        size: A4;
+                    }
+                    @media print {
+                        html, body {
+                            height: 100vh;
+                            overflow: hidden;
+                        }
+                        * {
+                            page-break-after: avoid !important;
+                            page-break-before: avoid !important;
+                            page-break-inside: avoid !important;
+                        }
+                    }
                 </style>
             `;
             
-            window.print();
+            // Zeige Info-Dialog mit Dateinamen
+            setTimeout(() => {
+                alert(`💾 PDF-Dateiname:\n\n"${fileName}.pdf"\n\nWählen Sie im Druckdialog "Als PDF speichern" und verwenden Sie diesen Namen.`);
+                window.print();
+            }, 100);
             
             // Styles zurücksetzen
             setTimeout(() => {
                 printTableDiv.style.display = 'none';
                 document.head.innerHTML = originalStyles;
-            }, 1000);
+                document.title = originalTitle; // Titel zurücksetzen
+            }, 2000);
         }
 
         function addTimeBlock() {
@@ -2111,12 +2223,13 @@
                         hasPause = true;
                         zeitFirma = '08:00'; // 8 Stunden in der Firma
                         
-                        // Gelegentlich Abendeinsätze
+                        // Gelegentlich Abendeinsätze (ohne Überschneidung)
                         if ((weekday === 'tuesday' || weekday === 'thursday') && day <= 15) {
                             hasAdditionalWork = true;
-                            start2 = '19:00';
+                            start2 = '18:00'; // Nach der Hauptarbeitszeit um 16:45
                             end2 = '22:00';
                             diaeten = 'mittlere'; // Bei Abendeinsätzen mittlere Diät
+                            zeitFirma = '08:00'; // Teilweise in der Firma, Rest Montagezulage
                         }
                         
                         // Beispiel für Dienst 1 an bestimmten Tagen
@@ -2127,6 +2240,11 @@
                         // Zeitausgleich an bestimmten Tagen
                         if (weekday === 'wednesday' && day <= 8) {
                             zeitausgleich = '02:00';
+                        }
+                        
+                        // Externe Arbeit ohne Zeit in der Firma
+                        if (weekday === 'tuesday' && day > 20) {
+                            zeitFirma = ''; // Keine Firmenzeit = gesamte Arbeitszeit wird Montagezulage
                         }
                         
                         // Gelegentlich krank
@@ -2166,7 +2284,7 @@
                             end1 = '14:00';
                             einsatzpauschalen = 2; // Beispiel: 2 Einsatzpauschalen am Samstag
                             diaeten = 'grosse'; // Große Diät am Samstag
-                            zeitFirma = '06:00'; // 6 Stunden in der Firma
+                            zeitFirma = ''; // Externe Arbeit = gesamte Zeit ist Montagezulage
                         }
                         break;
                     case 'sunday':
@@ -2176,7 +2294,7 @@
                             end1 = '22:30';
                             einsatzpauschalen = 3; // Beispiel: 3 Einsatzpauschalen am Sonntag
                             diaeten = 'grosse'; // Große Diät bei Notdienst
-                            zeitFirma = '01:00'; // Nur 1 Stunde in der Firma
+                            zeitFirma = ''; // Notdienst = gesamte Zeit ist Montagezulage
                         }
                         break;
                 }
