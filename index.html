@@ -855,9 +855,12 @@
             const endTime1 = getTimeFromInput(`end1_${day}`);
             const isHoliday = document.getElementById(`holiday_${day}`).checked;
             const hasPause = document.getElementById(`pause_${day}`).checked;
+            const dienst1 = document.getElementById(`dienst1_${day}`).checked;
+            const dienst2 = document.getElementById(`dienst2_${day}`).checked;
+            const einsatzpauschalen = parseInt(document.getElementById(`einsatzpauschalen_${day}`).value) || 0;
             
-            if (!startTime1 && !endTime1) {
-                alert('Bitte erst Zeiten für diesen Tag eingeben.');
+            if (!startTime1 && !endTime1 && !dienst1 && !dienst2 && einsatzpauschalen === 0) {
+                alert('Bitte erst Zeiten oder Dienste für diesen Tag eingeben.');
                 return;
             }
             
@@ -887,11 +890,17 @@
                     const targetInput2 = document.getElementById(`end1_${targetDay}`);
                     const targetHoliday = document.getElementById(`holiday_${targetDay}`);
                     const targetPause = document.getElementById(`pause_${targetDay}`);
+                    const targetDienst1 = document.getElementById(`dienst1_${targetDay}`);
+                    const targetDienst2 = document.getElementById(`dienst2_${targetDay}`);
+                    const targetEinsatzpauschalen = document.getElementById(`einsatzpauschalen_${targetDay}`);
                     
                     if (targetInput1) targetInput1.value = startTime1;
                     if (targetInput2) targetInput2.value = endTime1;
                     if (targetHoliday) targetHoliday.checked = isHoliday;
                     if (targetPause) targetPause.checked = hasPause;
+                    if (targetDienst1) targetDienst1.checked = dienst1;
+                    if (targetDienst2) targetDienst2.checked = dienst2;
+                    if (targetEinsatzpauschalen) targetEinsatzpauschalen.value = einsatzpauschalen;
                     
                     // Zusätzliche Arbeitszeiten hinzufügen falls vorhanden
                     additionalTimes.forEach((time, index) => {
@@ -911,12 +920,15 @@
                     
                     monthData[targetDay].isHoliday = isHoliday;
                     monthData[targetDay].hasPause = hasPause;
+                    monthData[targetDay].dienst1 = dienst1;
+                    monthData[targetDay].dienst2 = dienst2;
+                    monthData[targetDay].einsatzpauschalen = einsatzpauschalen;
                     
                     updateDaySummary(targetDay);
                 }
             }
             
-            alert('Zeiten wurden in die ganze Woche kopiert!');
+            alert('Zeiten und Dienste wurden in die ganze Woche kopiert!');
         }
 
         function minutesToTime(minutes) {
@@ -1303,12 +1315,34 @@
                     </div>
                     
                     <div class="form-field" style="margin-bottom: 10px;">
-                        <label style="font-size: 0.8rem;">
-                            <input type="checkbox" id="holiday_${day}" onchange="updateDaySummary(${day})"> Feiertag
-                        </label>
-                        <label style="font-size: 0.8rem; margin-left: 10px;">
-                            <input type="checkbox" id="pause_${day}" onchange="updateDaySummary(${day})"> Pause (0:45h)
-                        </label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px;">
+                            <label style="font-size: 0.8rem;">
+                                <input type="checkbox" id="holiday_${day}" onchange="updateDaySummary(${day})"> Feiertag
+                            </label>
+                            <label style="font-size: 0.8rem;">
+                                <input type="checkbox" id="pause_${day}" onchange="updateDaySummary(${day})"> Pause (0:45h)
+                            </label>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px;">
+                            <label style="font-size: 0.8rem;">
+                                <input type="checkbox" id="dienst1_${day}" onchange="updateDaySummary(${day})"> Dienst 1
+                            </label>
+                            <label style="font-size: 0.8rem;">
+                                <input type="checkbox" id="dienst2_${day}" onchange="updateDaySummary(${day})"> Dienst 2
+                            </label>
+                        </div>
+                        <div style="margin-top: 5px;">
+                            <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
+                                Einsatzpauschalen (1-9): 
+                                <input type="number" 
+                                       id="einsatzpauschalen_${day}" 
+                                       min="1" 
+                                       max="9" 
+                                       style="width: 50px; padding: 2px; font-size: 0.8rem;" 
+                                       onchange="updateDaySummary(${day})"
+                                       placeholder="0">
+                            </label>
+                        </div>
                     </div>
                     
                     <div id="timeInputs_${day}">
@@ -1354,6 +1388,9 @@
                     date: date,
                     isHoliday: false,
                     hasPause: false,
+                    dienst1: false,
+                    dienst2: false,
+                    einsatzpauschalen: 0,
                     timeBlocks: 1
                 };
             }
@@ -1362,8 +1399,15 @@
         function updateDaySummary(day) {
             const isHoliday = document.getElementById(`holiday_${day}`).checked;
             const hasPause = document.getElementById(`pause_${day}`).checked;
+            const dienst1 = document.getElementById(`dienst1_${day}`).checked;
+            const dienst2 = document.getElementById(`dienst2_${day}`).checked;
+            const einsatzpauschalen = parseInt(document.getElementById(`einsatzpauschalen_${day}`).value) || 0;
+            
             monthData[day].isHoliday = isHoliday;
             monthData[day].hasPause = hasPause;
+            monthData[day].dienst1 = dienst1;
+            monthData[day].dienst2 = dienst2;
+            monthData[day].einsatzpauschalen = einsatzpauschalen;
             
             // Sammle alle Arbeitszeit-Blöcke für diesen Tag
             const timeBlocks = [];
@@ -1381,22 +1425,40 @@
             
             const summaryDiv = document.getElementById(`summary_${day}`);
             
-            if (timeBlocks.length === 0) {
+            if (timeBlocks.length === 0 && !dienst1 && !dienst2 && einsatzpauschalen === 0) {
                 summaryDiv.innerHTML = 'Keine Arbeitszeit eingetragen';
                 return;
             }
             
-            const result = calculateDayWorkTime(timeBlocks, monthData[day].weekday, isHoliday, hasPause);
-            // Bruttoarbeitszeit minus tatsächliche Pausenzeit = Nettoarbeitszeit
-            const totalMinutes = result.normal + result.surcharge_50 + result.taxed_100 + result.tax_free_100;
-            const workMinutes = totalMinutes - result.break_time;
+            let summaryText = '';
             
-            summaryDiv.innerHTML = `
-                Arbeitszeit: ${minutesToHours(workMinutes)} h<br>
-                Normal: ${minutesToHours(result.normal)} h | 50%: ${minutesToHours(result.surcharge_50)} h<br>
-                100% versteuert: ${minutesToHours(result.taxed_100)} h | 100% steuerfrei: ${minutesToHours(result.tax_free_100)} h
-                ${(result.display_break_time || result.break_time) > 0 ? `<br>Pause: ${minutesToHours(result.display_break_time || result.break_time)} h` : ''}
-            `;
+            // Arbeitszeit-Zusammenfassung
+            if (timeBlocks.length > 0) {
+                const result = calculateDayWorkTime(timeBlocks, monthData[day].weekday, isHoliday, hasPause);
+                // Bruttoarbeitszeit minus tatsächliche Pausenzeit = Nettoarbeitszeit
+                const totalMinutes = result.normal + result.surcharge_50 + result.taxed_100 + result.tax_free_100;
+                const workMinutes = totalMinutes - result.break_time;
+                
+                summaryText += `Arbeitszeit: ${minutesToHours(workMinutes)} h<br>`;
+                summaryText += `Normal: ${minutesToHours(result.normal)} h | 50%: ${minutesToHours(result.surcharge_50)} h<br>`;
+                summaryText += `100% versteuert: ${minutesToHours(result.taxed_100)} h | 100% steuerfrei: ${minutesToHours(result.tax_free_100)} h`;
+                if ((result.display_break_time || result.break_time) > 0) {
+                    summaryText += `<br>Pause: ${minutesToHours(result.display_break_time || result.break_time)} h`;
+                }
+            }
+            
+            // Zusätzliche Dienste und Pauschalen
+            const additionalItems = [];
+            if (dienst1) additionalItems.push('Dienst 1');
+            if (dienst2) additionalItems.push('Dienst 2');
+            if (einsatzpauschalen > 0) additionalItems.push(`${einsatzpauschalen} Einsatzpauschalen`);
+            
+            if (additionalItems.length > 0) {
+                if (summaryText) summaryText += '<br>';
+                summaryText += `<strong>Zusätzlich:</strong> ${additionalItems.join(', ')}`;
+            }
+            
+            summaryDiv.innerHTML = summaryText || 'Keine Arbeitszeit eingetragen';
         }
 
         function calculateMonthTotal() {
@@ -1413,7 +1475,10 @@
                 break_time: 0,
                 display_break_time: 0,
                 workDays: 0,
-                totalWorkTime: 0
+                totalWorkTime: 0,
+                dienst1Count: 0,
+                dienst2Count: 0,
+                totalEinsatzpauschalen: 0
             };
 
             const employeeName = document.getElementById('employeeName').value;
@@ -1436,6 +1501,7 @@
                     }
                 }
                 
+                // Arbeitszeit berechnen
                 if (timeBlocks.length > 0) {
                     const result = calculateDayWorkTime(timeBlocks, dayData.weekday, dayData.isHoliday, dayData.hasPause);
                     
@@ -1446,6 +1512,11 @@
                     });
                     monthTotal.workDays++;
                 }
+                
+                // Zusätzliche Dienste und Pauschalen zählen
+                if (dayData.dienst1) monthTotal.dienst1Count++;
+                if (dayData.dienst2) monthTotal.dienst2Count++;
+                if (dayData.einsatzpauschalen) monthTotal.totalEinsatzpauschalen += dayData.einsatzpauschalen;
             }
 
             monthTotal.totalWorkTime = monthTotal.normal + monthTotal.surcharge_50 + monthTotal.taxed_100 + monthTotal.tax_free_100 - monthTotal.break_time;
@@ -1487,6 +1558,18 @@
                     <div class="result-item">
                         <div class="label">Pausenzeit</div>
                         <div class="value">${minutesToHours(monthTotal.display_break_time || monthTotal.break_time)} h</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">Dienst 1</div>
+                        <div class="value">${monthTotal.dienst1Count}x</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">Dienst 2</div>
+                        <div class="value">${monthTotal.dienst2Count}x</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">Einsatzpauschalen</div>
+                        <div class="value">${monthTotal.totalEinsatzpauschalen}</div>
                     </div>
                 </div>
             `;
@@ -1755,6 +1838,9 @@
                 let hasPause = false;
                 let hasAdditionalWork = false;
                 let start2 = '', end2 = '';
+                let dienst1 = false;
+                let dienst2 = false;
+                let einsatzpauschalen = 0;
                 
                 switch (weekday) {
                     case 'monday':
@@ -1771,17 +1857,28 @@
                             start2 = '19:00';
                             end2 = '22:00';
                         }
+                        
+                        // Beispiel für Dienst 1 an bestimmten Tagen
+                        if (weekday === 'monday' && day <= 10) {
+                            dienst1 = true;
+                        }
                         break;
                     case 'friday':
                         start1 = '07:30';
                         end1 = '12:00';
                         hasPause = false;
+                        
+                        // Freitags manchmal Dienst 2
+                        if (day <= 15) {
+                            dienst2 = true;
+                        }
                         break;
                     case 'saturday':
                         // Nur jeden 2. Samstag
                         if (day % 2 === 0) {
                             start1 = '08:00';
                             end1 = '14:00';
+                            einsatzpauschalen = 2; // Beispiel: 2 Einsatzpauschalen am Samstag
                         }
                         break;
                     case 'sunday':
@@ -1789,6 +1886,7 @@
                         if (day === 15) {
                             start1 = '19:00';
                             end1 = '22:30';
+                            einsatzpauschalen = 3; // Beispiel: 3 Einsatzpauschalen am Sonntag
                         }
                         break;
                 }
@@ -1797,10 +1895,16 @@
                 const startInput1 = document.getElementById(`start1_${day}`);
                 const endInput1 = document.getElementById(`end1_${day}`);
                 const pauseCheckbox = document.getElementById(`pause_${day}`);
+                const dienst1Checkbox = document.getElementById(`dienst1_${day}`);
+                const dienst2Checkbox = document.getElementById(`dienst2_${day}`);
+                const einsatzpauschalenInput = document.getElementById(`einsatzpauschalen_${day}`);
 
                 if (startInput1) startInput1.value = start1;
                 if (endInput1) endInput1.value = end1;
                 if (pauseCheckbox) pauseCheckbox.checked = hasPause;
+                if (dienst1Checkbox) dienst1Checkbox.checked = dienst1;
+                if (dienst2Checkbox) dienst2Checkbox.checked = dienst2;
+                if (einsatzpauschalenInput) einsatzpauschalenInput.value = einsatzpauschalen;
 
                 // Zusätzliche Arbeitszeit hinzufügen falls nötig
                 if (hasAdditionalWork) {
@@ -1817,6 +1921,9 @@
                 }
 
                 monthData[day].hasPause = hasPause;
+                monthData[day].dienst1 = dienst1;
+                monthData[day].dienst2 = dienst2;
+                monthData[day].einsatzpauschalen = einsatzpauschalen;
                 updateDaySummary(day);
             }
 
