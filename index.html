@@ -597,43 +597,7 @@
                         </div>
 
                         <div id="additionalTimeBlocks">
-                            <div class="time-block">
-                                <h4>🕕 Zusätzliche Arbeitszeit</h4>
-                                <div class="form-group">
-                                    <div class="form-field">
-                                        <label>Beginn</label>
-                                        <div class="time-input-group">
-                                            <select id="startHour2">
-                                                <option value="">--</option>
-                                            </select>
-                                            <span class="time-separator">:</span>
-                                            <select id="startMin2">
-                                                <option value="">--</option>
-                                                <option value="00">00</option>
-                                                <option value="15">15</option>
-                                                <option value="30">30</option>
-                                                <option value="45">45</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-field">
-                                        <label>Ende</label>
-                                        <div class="time-input-group">
-                                            <select id="endHour2">
-                                                <option value="">--</option>
-                                            </select>
-                                            <span class="time-separator">:</span>
-                                            <select id="endMin2">
-                                                <option value="">--</option>
-                                                <option value="00">00</option>
-                                                <option value="15">15</option>
-                                                <option value="30">30</option>
-                                                <option value="45">45</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- Zusätzliche Arbeitszeit-Blöcke werden hier dynamisch hinzugefügt -->
                         </div>
 
                         <div style="text-align: center; margin: 15px 0;">
@@ -701,7 +665,7 @@
 
     <script>
         let monthData = {};
-        let singleModeTimeBlocks = 2; // Startet mit 2 Blöcken
+        let singleModeTimeBlocks = 1; // Startet mit 1 Block
 
         function formatTimeInput(input) {
             let value = input.value.replace(/[^\d]/g, ''); // Nur Zahlen
@@ -1290,8 +1254,8 @@
                 if (endMinSelect) endMinSelect.value = '';
             }
             
-            // Zusätzliche Blöcke entfernen (nur 2 behalten)
-            while (singleModeTimeBlocks > 2) {
+            // Zusätzliche Blöcke entfernen (nur 1 behalten)
+            while (singleModeTimeBlocks > 1) {
                 removeTimeBlock();
             }
             
@@ -1757,7 +1721,7 @@
         }
 
         function removeTimeBlock() {
-            if (singleModeTimeBlocks > 2) {
+            if (singleModeTimeBlocks > 1) {
                 const blockToRemove = document.getElementById(`timeBlock${singleModeTimeBlocks}`);
                 if (blockToRemove) {
                     blockToRemove.remove();
@@ -1861,11 +1825,9 @@
 
         // Beispielwerte setzen beim Laden
         document.addEventListener('DOMContentLoaded', function() {
-            // Populate hour options for initial time blocks
+            // Populate hour options for initial time block
             populateHourOptions(document.getElementById('startHour1'));
             populateHourOptions(document.getElementById('endHour1'));
-            populateHourOptions(document.getElementById('startHour2'));
-            populateHourOptions(document.getElementById('endHour2'));
             
             // Standardwerte für Einzelberechnung setzen
             document.getElementById('startHour1').value = '07';
