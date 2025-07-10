@@ -1601,21 +1601,16 @@
                     <table style="width: 100%; border-collapse: collapse; border: 2px solid black; font-size: 9pt;">
                         <thead>
                             <tr style="border-bottom: 2px solid black;">
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 8%; background: #f0f0f0;">TAG</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 12%; background: #f0f0f0;">Datum</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 12%; background: #f0f0f0;">VON</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 12%; background: #f0f0f0;">BIS</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 12%; background: #f0f0f0;">GESAMT</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 8%; background: #f0f0f0;">Dienst</th>
+                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 10%; background: #f0f0f0;">Datum</th>
+                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 10%; background: #f0f0f0;">VON</th>
+                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 10%; background: #f0f0f0;">BIS</th>
+                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 10%; background: #f0f0f0;">GESAMT</th>
+                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 8%; background: #f0f0f0;">Normal</th>
                                 <th style="border: 1px solid black; padding: 4px; text-align: center; width: 8%; background: #f0f0f0;">50%</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 28%; background: #f0f0f0;">
-                                    Überstunden<br>
-                                    <div style="display: flex; border-top: 1px solid black; margin-top: 2px;">
-                                        <div style="flex: 1; padding: 2px; border-right: 1px solid black; text-align: center;">75%</div>
-                                        <div style="flex: 1; padding: 2px; border-right: 1px solid black; text-align: center;">100%</div>
-                                        <div style="flex: 1; padding: 2px; text-align: center;">100% frei</div>
-                                    </div>
-                                </th>
+                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 10%; background: #f0f0f0;">100%</th>
+                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 10%; background: #f0f0f0;">100% frei</th>
+                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 12%; background: #f0f0f0;">Dienst</th>
+                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 12%; background: #f0f0f0;">Einsatzpauschalen</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1636,6 +1631,8 @@
                 let surcharge50 = '';
                 let taxed100 = '';
                 let taxFree100 = '';
+                let dienstText = '';
+                let einsatzpauschalenText = '';
                 let result = null;
                 
                 if (monthData[day]) {
@@ -1667,24 +1664,29 @@
                         taxed100 = minutesToHours(result.taxed_100);
                         taxFree100 = minutesToHours(result.tax_free_100);
                     }
+                    
+                    // Dienst-Informationen sammeln
+                    const dienstItems = [];
+                    if (monthData[day].dienst1) dienstItems.push('1.Dienst');
+                    if (monthData[day].dienst2) dienstItems.push('2.Dienst');
+                    dienstText = dienstItems.join(', ');
+                    
+                    // Einsatzpauschalen
+                    einsatzpauschalenText = monthData[day].einsatzpauschalen > 0 ? monthData[day].einsatzpauschalen.toString() : '';
                 }
                 
                 tableHTML += `
                     <tr style="height: 25px;">
-                        <td style="border: 1px solid black; padding: 4px; text-align: center;">${paddedDay}</td>
                         <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${dateStr}</td>
                         <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[0] : ''}</td>
                         <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[1] : ''}</td>
                         <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${totalHours}</td>
                         <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${normal}</td>
                         <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${surcharge50}</td>
-                        <td style="border: 1px solid black; padding: 0;">
-                            <div style="display: flex; height: 100%;">
-                                <div style="flex: 1; padding: 4px; border-right: 1px solid black; text-align: center; font-size: 8pt;">${result ? minutesToHours(result.taxed_100 * 0.75) : ''}</div>
-                                <div style="flex: 1; padding: 4px; border-right: 1px solid black; text-align: center; font-size: 8pt;">${taxed100}</div>
-                                <div style="flex: 1; padding: 4px; text-align: center; font-size: 8pt;">${taxFree100}</div>
-                            </div>
-                        </td>
+                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${taxed100}</td>
+                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${taxFree100}</td>
+                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${dienstText}</td>
+                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${einsatzpauschalenText}</td>
                     </tr>
                 `;
             }
@@ -1693,17 +1695,20 @@
                         </tbody>
                         <tfoot>
                             <tr style="background: #f0f0f0; font-weight: bold; border-top: 2px solid black;">
-                                <td colspan="4" style="border: 1px solid black; padding: 4px; text-align: center;">SUMME</td>
+                                <td style="border: 1px solid black; padding: 4px; text-align: center;">SUMME</td>
+                                <td style="border: 1px solid black; padding: 4px; text-align: center;">-</td>
+                                <td style="border: 1px solid black; padding: 4px; text-align: center;">-</td>
                                 <td style="border: 1px solid black; padding: 4px; text-align: center;">${minutesToHours(monthTotal.totalWorkTime)}</td>
                                 <td style="border: 1px solid black; padding: 4px; text-align: center;">${minutesToHours(monthTotal.normal)}</td>
                                 <td style="border: 1px solid black; padding: 4px; text-align: center;">${minutesToHours(monthTotal.surcharge_50)}</td>
-                                <td style="border: 1px solid black; padding: 0;">
-                                    <div style="display: flex; height: 100%;">
-                                        <div style="flex: 1; padding: 4px; border-right: 1px solid black; text-align: center;">${minutesToHours(monthTotal.taxed_100 * 0.75)}</div>
-                                        <div style="flex: 1; padding: 4px; border-right: 1px solid black; text-align: center;">${minutesToHours(monthTotal.taxed_100)}</div>
-                                        <div style="flex: 1; padding: 4px; text-align: center;">${minutesToHours(monthTotal.tax_free_100)}</div>
-                                    </div>
+                                <td style="border: 1px solid black; padding: 4px; text-align: center;">${minutesToHours(monthTotal.taxed_100)}</td>
+                                <td style="border: 1px solid black; padding: 4px; text-align: center;">${minutesToHours(monthTotal.tax_free_100)}</td>
+                                <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">
+                                    ${monthTotal.dienst1Count > 0 ? `1.Dienst: ${monthTotal.dienst1Count}x` : ''}
+                                    ${monthTotal.dienst1Count > 0 && monthTotal.dienst2Count > 0 ? '<br>' : ''}
+                                    ${monthTotal.dienst2Count > 0 ? `2.Dienst: ${monthTotal.dienst2Count}x` : ''}
                                 </td>
+                                <td style="border: 1px solid black; padding: 4px; text-align: center;">${monthTotal.totalEinsatzpauschalen}</td>
                             </tr>
                         </tfoot>
                     </table>
