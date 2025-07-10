@@ -858,9 +858,16 @@
             const dienst1 = document.getElementById(`dienst1_${day}`).checked;
             const dienst2 = document.getElementById(`dienst2_${day}`).checked;
             const einsatzpauschalen = parseInt(document.getElementById(`einsatzpauschalen_${day}`).value) || 0;
+            const krankUrlaub = document.getElementById(`krankUrlaub_${day}`).value;
+            const diaeten = document.getElementById(`diaeten_${day}`).value;
+            const zeitausgleich = getTimeFromDropdowns(`zeitausgleichH_${day}`, `zeitausgleichM_${day}`);
+            const zeitFirma = getTimeFromDropdowns(`zeitFirmaH_${day}`, `zeitFirmaM_${day}`);
             
-            if (!startTime1 && !endTime1 && !dienst1 && !dienst2 && einsatzpauschalen === 0) {
-                alert('Bitte erst Zeiten oder Dienste für diesen Tag eingeben.');
+            const hasAnyData = startTime1 || endTime1 || dienst1 || dienst2 || einsatzpauschalen > 0 || 
+                             krankUrlaub || diaeten || zeitausgleich || zeitFirma;
+            
+            if (!hasAnyData) {
+                alert('Bitte erst Zeiten oder andere Daten für diesen Tag eingeben.');
                 return;
             }
             
@@ -893,6 +900,12 @@
                     const targetDienst1 = document.getElementById(`dienst1_${targetDay}`);
                     const targetDienst2 = document.getElementById(`dienst2_${targetDay}`);
                     const targetEinsatzpauschalen = document.getElementById(`einsatzpauschalen_${targetDay}`);
+                    const targetKrankUrlaub = document.getElementById(`krankUrlaub_${targetDay}`);
+                    const targetDiaeten = document.getElementById(`diaeten_${targetDay}`);
+                    const targetZeitausgleichH = document.getElementById(`zeitausgleichH_${targetDay}`);
+                    const targetZeitausgleichM = document.getElementById(`zeitausgleichM_${targetDay}`);
+                    const targetZeitFirmaH = document.getElementById(`zeitFirmaH_${targetDay}`);
+                    const targetZeitFirmaM = document.getElementById(`zeitFirmaM_${targetDay}`);
                     
                     if (targetInput1) targetInput1.value = startTime1;
                     if (targetInput2) targetInput2.value = endTime1;
@@ -901,6 +914,22 @@
                     if (targetDienst1) targetDienst1.checked = dienst1;
                     if (targetDienst2) targetDienst2.checked = dienst2;
                     if (targetEinsatzpauschalen) targetEinsatzpauschalen.value = einsatzpauschalen;
+                    if (targetKrankUrlaub) targetKrankUrlaub.value = krankUrlaub;
+                    if (targetDiaeten) targetDiaeten.value = diaeten;
+                    
+                    // Zeitausgleich setzen
+                    if (zeitausgleich) {
+                        const [hours, minutes] = zeitausgleich.split(':');
+                        if (targetZeitausgleichH) targetZeitausgleichH.value = hours;
+                        if (targetZeitausgleichM) targetZeitausgleichM.value = minutes;
+                    }
+                    
+                    // Zeit in der Firma setzen
+                    if (zeitFirma) {
+                        const [hours, minutes] = zeitFirma.split(':');
+                        if (targetZeitFirmaH) targetZeitFirmaH.value = hours;
+                        if (targetZeitFirmaM) targetZeitFirmaM.value = minutes;
+                    }
                     
                     // Zusätzliche Arbeitszeiten hinzufügen falls vorhanden
                     additionalTimes.forEach((time, index) => {
@@ -923,12 +952,16 @@
                     monthData[targetDay].dienst1 = dienst1;
                     monthData[targetDay].dienst2 = dienst2;
                     monthData[targetDay].einsatzpauschalen = einsatzpauschalen;
+                    monthData[targetDay].krankUrlaub = krankUrlaub;
+                    monthData[targetDay].diaeten = diaeten;
+                    monthData[targetDay].zeitausgleich = zeitausgleich;
+                    monthData[targetDay].zeitFirma = zeitFirma;
                     
                     updateDaySummary(targetDay);
                 }
             }
             
-            alert('Zeiten und Dienste wurden in die ganze Woche kopiert!');
+            alert('Alle Daten wurden in die ganze Woche kopiert!');
         }
 
         function minutesToTime(minutes) {
@@ -1331,6 +1364,61 @@
                                 <input type="checkbox" id="dienst2_${day}" onchange="updateDaySummary(${day})"> Dienst 2
                             </label>
                         </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px;">
+                            <label style="font-size: 0.8rem;">
+                                Krank/Urlaub:
+                                <select id="krankUrlaub_${day}" onchange="updateDaySummary(${day})" style="width: 100%; padding: 2px; font-size: 0.8rem;">
+                                    <option value="">--</option>
+                                    <option value="krank">Krank</option>
+                                    <option value="urlaub">Urlaub</option>
+                                </select>
+                            </label>
+                            <label style="font-size: 0.8rem;">
+                                Diäten:
+                                <select id="diaeten_${day}" onchange="updateDaySummary(${day})" style="width: 100%; padding: 2px; font-size: 0.8rem;">
+                                    <option value="">--</option>
+                                    <option value="kleine">kleine Diät</option>
+                                    <option value="mittlere">mittlere Diät</option>
+                                    <option value="grosse">große Diät</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px;">
+                            <label style="font-size: 0.8rem;">
+                                Zeitausgleich:
+                                <div style="display: flex; gap: 2px; align-items: center;">
+                                    <select id="zeitausgleichH_${day}" onchange="updateDaySummary(${day})" style="width: 50px; padding: 2px; font-size: 0.8rem;">
+                                        <option value="">--</option>
+                                        ${Array.from({length: 24}, (_, i) => `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`).join('')}
+                                    </select>
+                                    <span>:</span>
+                                    <select id="zeitausgleichM_${day}" onchange="updateDaySummary(${day})" style="width: 50px; padding: 2px; font-size: 0.8rem;">
+                                        <option value="">--</option>
+                                        <option value="00">00</option>
+                                        <option value="15">15</option>
+                                        <option value="30">30</option>
+                                        <option value="45">45</option>
+                                    </select>
+                                </div>
+                            </label>
+                            <label style="font-size: 0.8rem;">
+                                Zeit in der Firma:
+                                <div style="display: flex; gap: 2px; align-items: center;">
+                                    <select id="zeitFirmaH_${day}" onchange="updateDaySummary(${day})" style="width: 50px; padding: 2px; font-size: 0.8rem;">
+                                        <option value="">--</option>
+                                        ${Array.from({length: 24}, (_, i) => `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`).join('')}
+                                    </select>
+                                    <span>:</span>
+                                    <select id="zeitFirmaM_${day}" onchange="updateDaySummary(${day})" style="width: 50px; padding: 2px; font-size: 0.8rem;">
+                                        <option value="">--</option>
+                                        <option value="00">00</option>
+                                        <option value="15">15</option>
+                                        <option value="30">30</option>
+                                        <option value="45">45</option>
+                                    </select>
+                                </div>
+                            </label>
+                        </div>
                         <div style="margin-top: 5px;">
                             <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
                                 Einsatzpauschalen (1-9): 
@@ -1391,9 +1479,24 @@
                     dienst1: false,
                     dienst2: false,
                     einsatzpauschalen: 0,
+                    krankUrlaub: '',
+                    diaeten: '',
+                    zeitausgleich: '',
+                    zeitFirma: '',
                     timeBlocks: 1
                 };
             }
+        }
+
+        function getTimeFromDropdowns(hourId, minId) {
+            const hourSelect = document.getElementById(hourId);
+            const minSelect = document.getElementById(minId);
+            
+            if (!hourSelect || !minSelect || !hourSelect.value || !minSelect.value) {
+                return '';
+            }
+            
+            return `${hourSelect.value}:${minSelect.value}`;
         }
 
         function updateDaySummary(day) {
@@ -1402,12 +1505,43 @@
             const dienst1 = document.getElementById(`dienst1_${day}`).checked;
             const dienst2 = document.getElementById(`dienst2_${day}`).checked;
             const einsatzpauschalen = parseInt(document.getElementById(`einsatzpauschalen_${day}`).value) || 0;
+            const krankUrlaub = document.getElementById(`krankUrlaub_${day}`).value;
+            const diaeten = document.getElementById(`diaeten_${day}`).value;
+            const zeitausgleich = getTimeFromDropdowns(`zeitausgleichH_${day}`, `zeitausgleichM_${day}`);
+            const zeitFirma = getTimeFromDropdowns(`zeitFirmaH_${day}`, `zeitFirmaM_${day}`);
             
             monthData[day].isHoliday = isHoliday;
             monthData[day].hasPause = hasPause;
             monthData[day].dienst1 = dienst1;
             monthData[day].dienst2 = dienst2;
             monthData[day].einsatzpauschalen = einsatzpauschalen;
+            monthData[day].krankUrlaub = krankUrlaub;
+            monthData[day].diaeten = diaeten;
+            monthData[day].zeitausgleich = zeitausgleich;
+            monthData[day].zeitFirma = zeitFirma;
+            
+            const summaryDiv = document.getElementById(`summary_${day}`);
+            
+            // Bei Krank/Urlaub keine Arbeitszeit-Berechnung
+            if (krankUrlaub) {
+                let summaryText = `<strong>${krankUrlaub === 'krank' ? 'Krank' : 'Urlaub'}</strong>`;
+                
+                // Zusätzliche Informationen
+                const additionalItems = [];
+                if (dienst1) additionalItems.push('Dienst 1');
+                if (dienst2) additionalItems.push('Dienst 2');
+                if (einsatzpauschalen > 0) additionalItems.push(`${einsatzpauschalen} Einsatzpauschalen`);
+                if (diaeten) additionalItems.push(`${diaeten} Diät`);
+                if (zeitausgleich) additionalItems.push(`Zeitausgleich: ${zeitausgleich}h`);
+                if (zeitFirma) additionalItems.push(`Zeit Firma: ${zeitFirma}h`);
+                
+                if (additionalItems.length > 0) {
+                    summaryText += `<br><strong>Zusätzlich:</strong> ${additionalItems.join(', ')}`;
+                }
+                
+                summaryDiv.innerHTML = summaryText;
+                return;
+            }
             
             // Sammle alle Arbeitszeit-Blöcke für diesen Tag
             const timeBlocks = [];
@@ -1423,9 +1557,7 @@
                 }
             }
             
-            const summaryDiv = document.getElementById(`summary_${day}`);
-            
-            if (timeBlocks.length === 0 && !dienst1 && !dienst2 && einsatzpauschalen === 0) {
+            if (timeBlocks.length === 0 && !dienst1 && !dienst2 && einsatzpauschalen === 0 && !diaeten && !zeitausgleich && !zeitFirma) {
                 summaryDiv.innerHTML = 'Keine Arbeitszeit eingetragen';
                 return;
             }
@@ -1445,6 +1577,15 @@
                 if ((result.display_break_time || result.break_time) > 0) {
                     summaryText += `<br>Pause: ${minutesToHours(result.display_break_time || result.break_time)} h`;
                 }
+                
+                // Montagezulage berechnen (Gesamtstunden - Zeit in der Firma)
+                if (zeitFirma) {
+                    const zeitFirmaMinuten = timeToMinutes(zeitFirma);
+                    const montagezulageMinuten = workMinutes - zeitFirmaMinuten;
+                    if (montagezulageMinuten > 0) {
+                        summaryText += `<br>Montagezulage: ${minutesToHours(montagezulageMinuten)} h`;
+                    }
+                }
             }
             
             // Zusätzliche Dienste und Pauschalen
@@ -1452,6 +1593,9 @@
             if (dienst1) additionalItems.push('Dienst 1');
             if (dienst2) additionalItems.push('Dienst 2');
             if (einsatzpauschalen > 0) additionalItems.push(`${einsatzpauschalen} Einsatzpauschalen`);
+            if (diaeten) additionalItems.push(`${diaeten} Diät`);
+            if (zeitausgleich) additionalItems.push(`Zeitausgleich: ${zeitausgleich}h`);
+            if (zeitFirma) additionalItems.push(`Zeit Firma: ${zeitFirma}h`);
             
             if (additionalItems.length > 0) {
                 if (summaryText) summaryText += '<br>';
@@ -1478,7 +1622,14 @@
                 totalWorkTime: 0,
                 dienst1Count: 0,
                 dienst2Count: 0,
-                totalEinsatzpauschalen: 0
+                totalEinsatzpauschalen: 0,
+                krankTage: 0,
+                urlaubTage: 0,
+                kleineDiaetCount: 0,
+                mittlereDiaetCount: 0,
+                grosseDiaetCount: 0,
+                totalZeitausgleich: 0,
+                totalMontagezulage: 0
             };
 
             const employeeName = document.getElementById('employeeName').value;
@@ -1487,36 +1638,66 @@
             for (const day in monthData) {
                 const dayData = monthData[day];
                 
-                // Sammle alle Arbeitszeit-Blöcke für diesen Tag
-                const timeBlocks = [];
-                for (let i = 1; i <= dayData.timeBlocks; i++) {
-                    const startTime = getTimeFromInput(`start${i}_${day}`);
-                    const endTime = getTimeFromInput(`end${i}_${day}`);
+                // Krank/Urlaub zählen
+                if (dayData.krankUrlaub === 'krank') monthTotal.krankTage++;
+                if (dayData.krankUrlaub === 'urlaub') monthTotal.urlaubTage++;
+                
+                // Bei Krank/Urlaub keine Arbeitszeit-Berechnung
+                if (!dayData.krankUrlaub) {
+                    // Sammle alle Arbeitszeit-Blöcke für diesen Tag
+                    const timeBlocks = [];
+                    for (let i = 1; i <= dayData.timeBlocks; i++) {
+                        const startTime = getTimeFromInput(`start${i}_${day}`);
+                        const endTime = getTimeFromInput(`end${i}_${day}`);
+                        
+                        if (startTime && endTime) {
+                            timeBlocks.push({
+                                start: startTime,
+                                end: endTime
+                            });
+                        }
+                    }
                     
-                    if (startTime && endTime) {
-                        timeBlocks.push({
-                            start: startTime,
-                            end: endTime
+                    // Arbeitszeit berechnen
+                    if (timeBlocks.length > 0) {
+                        const result = calculateDayWorkTime(timeBlocks, dayData.weekday, dayData.isHoliday, dayData.hasPause);
+                        
+                        Object.keys(result).forEach(key => {
+                            if (monthTotal[key] !== undefined) {
+                                monthTotal[key] += result[key];
+                            }
                         });
+                        
+                        const totalMinutes = result.normal + result.surcharge_50 + result.taxed_100 + result.tax_free_100;
+                        const workMinutes = totalMinutes - result.break_time;
+                        
+                        // Montagezulage berechnen
+                        if (dayData.zeitFirma) {
+                            const zeitFirmaMinuten = timeToMinutes(dayData.zeitFirma);
+                            const montagezulageMinuten = workMinutes - zeitFirmaMinuten;
+                            if (montagezulageMinuten > 0) {
+                                monthTotal.totalMontagezulage += montagezulageMinuten;
+                            }
+                        }
+                        
+                        monthTotal.workDays++;
                     }
                 }
                 
-                // Arbeitszeit berechnen
-                if (timeBlocks.length > 0) {
-                    const result = calculateDayWorkTime(timeBlocks, dayData.weekday, dayData.isHoliday, dayData.hasPause);
-                    
-                    Object.keys(result).forEach(key => {
-                        if (monthTotal[key] !== undefined) {
-                            monthTotal[key] += result[key];
-                        }
-                    });
-                    monthTotal.workDays++;
+                // Zeitausgleich summieren
+                if (dayData.zeitausgleich) {
+                    monthTotal.totalZeitausgleich += timeToMinutes(dayData.zeitausgleich);
                 }
                 
                 // Zusätzliche Dienste und Pauschalen zählen
                 if (dayData.dienst1) monthTotal.dienst1Count++;
                 if (dayData.dienst2) monthTotal.dienst2Count++;
                 if (dayData.einsatzpauschalen) monthTotal.totalEinsatzpauschalen += dayData.einsatzpauschalen;
+                
+                // Diäten zählen
+                if (dayData.diaeten === 'kleine') monthTotal.kleineDiaetCount++;
+                if (dayData.diaeten === 'mittlere') monthTotal.mittlereDiaetCount++;
+                if (dayData.diaeten === 'grosse') monthTotal.grosseDiaetCount++;
             }
 
             monthTotal.totalWorkTime = monthTotal.normal + monthTotal.surcharge_50 + monthTotal.taxed_100 + monthTotal.tax_free_100 - monthTotal.break_time;
@@ -1534,6 +1715,14 @@
                     <div class="result-item">
                         <div class="label">Arbeitstage</div>
                         <div class="value">${monthTotal.workDays}</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">Krank</div>
+                        <div class="value">${monthTotal.krankTage}</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">Urlaub</div>
+                        <div class="value">${monthTotal.urlaubTage}</div>
                     </div>
                     <div class="result-item">
                         <div class="label">Gesamtarbeitszeit</div>
@@ -1571,6 +1760,26 @@
                         <div class="label">Einsatzpauschalen</div>
                         <div class="value">${monthTotal.totalEinsatzpauschalen}</div>
                     </div>
+                    <div class="result-item">
+                        <div class="label">Kleine Diäten</div>
+                        <div class="value">${monthTotal.kleineDiaetCount}x</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">Mittlere Diäten</div>
+                        <div class="value">${monthTotal.mittlereDiaetCount}x</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">Große Diäten</div>
+                        <div class="value">${monthTotal.grosseDiaetCount}x</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">Zeitausgleich</div>
+                        <div class="value">${minutesToHours(monthTotal.totalZeitausgleich)} h</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="label">Montagezulage</div>
+                        <div class="value">${minutesToHours(monthTotal.totalMontagezulage)} h</div>
+                    </div>
                 </div>
             `;
 
@@ -1598,19 +1807,22 @@
                         </div>
                     </div>
                     
-                    <table style="width: 100%; border-collapse: collapse; border: 2px solid black; font-size: 9pt;">
+                    <table style="width: 100%; border-collapse: collapse; border: 2px solid black; font-size: 8pt;">
                         <thead>
                             <tr style="border-bottom: 2px solid black;">
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 10%; background: #f0f0f0;">Datum</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 10%; background: #f0f0f0;">VON</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 10%; background: #f0f0f0;">BIS</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 10%; background: #f0f0f0;">GESAMT</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 8%; background: #f0f0f0;">Normal</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 8%; background: #f0f0f0;">50%</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 10%; background: #f0f0f0;">100%</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 10%; background: #f0f0f0;">100% frei</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 12%; background: #f0f0f0;">Dienst</th>
-                                <th style="border: 1px solid black; padding: 4px; text-align: center; width: 12%; background: #f0f0f0;">Einsatzpauschalen</th>
+                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 7%; background: #f0f0f0;">Datum</th>
+                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 7%; background: #f0f0f0;">VON</th>
+                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 7%; background: #f0f0f0;">BIS</th>
+                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 7%; background: #f0f0f0;">GESAMT</th>
+                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 6%; background: #f0f0f0;">Normal</th>
+                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 6%; background: #f0f0f0;">50%</th>
+                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 6%; background: #f0f0f0;">100%</th>
+                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 6%; background: #f0f0f0;">100% frei</th>
+                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 8%; background: #f0f0f0;">Dienst</th>
+                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 8%; background: #f0f0f0;">Einsatzpauschalen</th>
+                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 8%; background: #f0f0f0;">Diäten</th>
+                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 8%; background: #f0f0f0;">Zeitausgleich</th>
+                                <th style="border: 1px solid black; padding: 3px; text-align: center; width: 8%; background: #f0f0f0;">Montagezulage</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1633,36 +1845,54 @@
                 let taxFree100 = '';
                 let dienstText = '';
                 let einsatzpauschalenText = '';
+                let diaetenText = '';
+                let zeitausgleichText = '';
+                let montagezulageText = '';
                 let result = null;
                 
                 if (monthData[day]) {
-                    // Sammle alle Arbeitszeiten für diesen Tag
-                    const timeBlocks = [];
-                    for (let i = 1; i <= monthData[day].timeBlocks; i++) {
-                        const startTime = getTimeFromInput(`start${i}_${day}`);
-                        const endTime = getTimeFromInput(`end${i}_${day}`);
-                        
-                        if (startTime && endTime) {
-                            timeBlocks.push({
-                                start: startTime,
-                                end: endTime
-                            });
+                    // Bei Krank/Urlaub keine normalen Arbeitszeiten
+                    if (monthData[day].krankUrlaub) {
+                        timeDisplay = monthData[day].krankUrlaub === 'krank' ? 'Krank' : 'Urlaub';
+                        totalHours = timeDisplay;
+                    } else {
+                        // Sammle alle Arbeitszeiten für diesen Tag
+                        const timeBlocks = [];
+                        for (let i = 1; i <= monthData[day].timeBlocks; i++) {
+                            const startTime = getTimeFromInput(`start${i}_${day}`);
+                            const endTime = getTimeFromInput(`end${i}_${day}`);
+                            
+                            if (startTime && endTime) {
+                                timeBlocks.push({
+                                    start: startTime,
+                                    end: endTime
+                                });
+                            }
                         }
-                    }
-                    
-                    if (timeBlocks.length > 0) {
-                        timeDisplay = timeBlocks.map(block => `${block.start}-${block.end}`).join(', ');
                         
-                        result = calculateDayWorkTime(timeBlocks, monthData[day].weekday, monthData[day].isHoliday, monthData[day].hasPause);
-                        // Bruttoarbeitszeit minus tatsächliche Pausenzeit = Nettoarbeitszeit
-                        const totalMinutes = result.normal + result.surcharge_50 + result.taxed_100 + result.tax_free_100;
-                        const workMinutes = totalMinutes - result.break_time;
-                        
-                        totalHours = minutesToHours(workMinutes);
-                        normal = minutesToHours(result.normal);
-                        surcharge50 = minutesToHours(result.surcharge_50);
-                        taxed100 = minutesToHours(result.taxed_100);
-                        taxFree100 = minutesToHours(result.tax_free_100);
+                        if (timeBlocks.length > 0) {
+                            timeDisplay = timeBlocks.map(block => `${block.start}-${block.end}`).join(', ');
+                            
+                            result = calculateDayWorkTime(timeBlocks, monthData[day].weekday, monthData[day].isHoliday, monthData[day].hasPause);
+                            // Bruttoarbeitszeit minus tatsächliche Pausenzeit = Nettoarbeitszeit
+                            const totalMinutes = result.normal + result.surcharge_50 + result.taxed_100 + result.tax_free_100;
+                            const workMinutes = totalMinutes - result.break_time;
+                            
+                            totalHours = minutesToHours(workMinutes);
+                            normal = minutesToHours(result.normal);
+                            surcharge50 = minutesToHours(result.surcharge_50);
+                            taxed100 = minutesToHours(result.taxed_100);
+                            taxFree100 = minutesToHours(result.tax_free_100);
+                            
+                            // Montagezulage berechnen
+                            if (monthData[day].zeitFirma) {
+                                const zeitFirmaMinuten = timeToMinutes(monthData[day].zeitFirma);
+                                const montagezulageMinuten = workMinutes - zeitFirmaMinuten;
+                                if (montagezulageMinuten > 0) {
+                                    montagezulageText = minutesToHours(montagezulageMinuten);
+                                }
+                            }
+                        }
                     }
                     
                     // Dienst-Informationen sammeln
@@ -1673,20 +1903,31 @@
                     
                     // Einsatzpauschalen
                     einsatzpauschalenText = monthData[day].einsatzpauschalen > 0 ? monthData[day].einsatzpauschalen.toString() : '';
+                    
+                    // Diäten
+                    if (monthData[day].diaeten === 'kleine') diaetenText = 'kleine';
+                    if (monthData[day].diaeten === 'mittlere') diaetenText = 'mittlere';
+                    if (monthData[day].diaeten === 'grosse') diaetenText = 'große';
+                    
+                    // Zeitausgleich
+                    zeitausgleichText = monthData[day].zeitausgleich || '';
                 }
                 
                 tableHTML += `
-                    <tr style="height: 25px;">
-                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${dateStr}</td>
-                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[0] : ''}</td>
-                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[1] : ''}</td>
-                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${totalHours}</td>
-                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${normal}</td>
-                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${surcharge50}</td>
-                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${taxed100}</td>
-                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${taxFree100}</td>
-                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${dienstText}</td>
-                        <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">${einsatzpauschalenText}</td>
+                    <tr style="height: 20px;">
+                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${dateStr}</td>
+                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${monthData[day] && monthData[day].krankUrlaub ? '' : (timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[0] : '')}</td>
+                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${monthData[day] && monthData[day].krankUrlaub ? '' : (timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[1] : '')}</td>
+                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${totalHours}</td>
+                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${normal}</td>
+                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${surcharge50}</td>
+                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${taxed100}</td>
+                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${taxFree100}</td>
+                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${dienstText}</td>
+                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${einsatzpauschalenText}</td>
+                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${diaetenText}</td>
+                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${zeitausgleichText}</td>
+                        <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${montagezulageText}</td>
                     </tr>
                 `;
             }
@@ -1695,20 +1936,29 @@
                         </tbody>
                         <tfoot>
                             <tr style="background: #f0f0f0; font-weight: bold; border-top: 2px solid black;">
-                                <td style="border: 1px solid black; padding: 4px; text-align: center;">SUMME</td>
-                                <td style="border: 1px solid black; padding: 4px; text-align: center;">-</td>
-                                <td style="border: 1px solid black; padding: 4px; text-align: center;">-</td>
-                                <td style="border: 1px solid black; padding: 4px; text-align: center;">${minutesToHours(monthTotal.totalWorkTime)}</td>
-                                <td style="border: 1px solid black; padding: 4px; text-align: center;">${minutesToHours(monthTotal.normal)}</td>
-                                <td style="border: 1px solid black; padding: 4px; text-align: center;">${minutesToHours(monthTotal.surcharge_50)}</td>
-                                <td style="border: 1px solid black; padding: 4px; text-align: center;">${minutesToHours(monthTotal.taxed_100)}</td>
-                                <td style="border: 1px solid black; padding: 4px; text-align: center;">${minutesToHours(monthTotal.tax_free_100)}</td>
-                                <td style="border: 1px solid black; padding: 4px; text-align: center; font-size: 8pt;">
-                                    ${monthTotal.dienst1Count > 0 ? `1.Dienst: ${monthTotal.dienst1Count}x` : ''}
+                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">SUMME</td>
+                                <td style="border: 1px solid black; padding: 3px; text-align: center;">-</td>
+                                <td style="border: 1px solid black; padding: 3px; text-align: center;">-</td>
+                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalWorkTime)}</td>
+                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.normal)}</td>
+                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.surcharge_50)}</td>
+                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.taxed_100)}</td>
+                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.tax_free_100)}</td>
+                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 6pt;">
+                                    ${monthTotal.dienst1Count > 0 ? `1.D: ${monthTotal.dienst1Count}x` : ''}
                                     ${monthTotal.dienst1Count > 0 && monthTotal.dienst2Count > 0 ? '<br>' : ''}
-                                    ${monthTotal.dienst2Count > 0 ? `2.Dienst: ${monthTotal.dienst2Count}x` : ''}
+                                    ${monthTotal.dienst2Count > 0 ? `2.D: ${monthTotal.dienst2Count}x` : ''}
                                 </td>
-                                <td style="border: 1px solid black; padding: 4px; text-align: center;">${monthTotal.totalEinsatzpauschalen}</td>
+                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${monthTotal.totalEinsatzpauschalen}</td>
+                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 6pt;">
+                                    ${monthTotal.kleineDiaetCount > 0 ? `kl: ${monthTotal.kleineDiaetCount}` : ''}
+                                    ${(monthTotal.kleineDiaetCount > 0 && monthTotal.mittlereDiaetCount > 0) ? '<br>' : ''}
+                                    ${monthTotal.mittlereDiaetCount > 0 ? `mi: ${monthTotal.mittlereDiaetCount}` : ''}
+                                    ${((monthTotal.kleineDiaetCount > 0 || monthTotal.mittlereDiaetCount > 0) && monthTotal.grosseDiaetCount > 0) ? '<br>' : ''}
+                                    ${monthTotal.grosseDiaetCount > 0 ? `gr: ${monthTotal.grosseDiaetCount}` : ''}
+                                </td>
+                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalZeitausgleich)}</td>
+                                <td style="border: 1px solid black; padding: 3px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalMontagezulage)}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -1846,6 +2096,10 @@
                 let dienst1 = false;
                 let dienst2 = false;
                 let einsatzpauschalen = 0;
+                let krankUrlaub = '';
+                let diaeten = '';
+                let zeitausgleich = '';
+                let zeitFirma = '';
                 
                 switch (weekday) {
                     case 'monday':
@@ -1855,27 +2109,54 @@
                         start1 = '07:30';
                         end1 = '16:45';
                         hasPause = true;
+                        zeitFirma = '08:00'; // 8 Stunden in der Firma
                         
                         // Gelegentlich Abendeinsätze
                         if ((weekday === 'tuesday' || weekday === 'thursday') && day <= 15) {
                             hasAdditionalWork = true;
                             start2 = '19:00';
                             end2 = '22:00';
+                            diaeten = 'mittlere'; // Bei Abendeinsätzen mittlere Diät
                         }
                         
                         // Beispiel für Dienst 1 an bestimmten Tagen
                         if (weekday === 'monday' && day <= 10) {
                             dienst1 = true;
                         }
+                        
+                        // Zeitausgleich an bestimmten Tagen
+                        if (weekday === 'wednesday' && day <= 8) {
+                            zeitausgleich = '02:00';
+                        }
+                        
+                        // Gelegentlich krank
+                        if (weekday === 'thursday' && day === 20) {
+                            krankUrlaub = 'krank';
+                            start1 = ''; end1 = ''; // Keine Arbeitszeit bei Krankheit
+                            hasPause = false;
+                            zeitFirma = '';
+                        }
                         break;
                     case 'friday':
                         start1 = '07:30';
                         end1 = '12:00';
                         hasPause = false;
+                        zeitFirma = '04:30'; // 4.5 Stunden in der Firma
                         
-                        // Freitags manchmal Dienst 2
+                        // Freitags manchmal Dienst 2 und kleine Diät
                         if (day <= 15) {
                             dienst2 = true;
+                            diaeten = 'kleine';
+                        }
+                        
+                        // Urlaub an einem Freitag
+                        if (day === 25) {
+                            krankUrlaub = 'urlaub';
+                            start1 = ''; end1 = '';
+                            hasPause = false;
+                            dienst2 = false;
+                            diaeten = '';
+                            zeitFirma = '';
                         }
                         break;
                     case 'saturday':
@@ -1884,6 +2165,8 @@
                             start1 = '08:00';
                             end1 = '14:00';
                             einsatzpauschalen = 2; // Beispiel: 2 Einsatzpauschalen am Samstag
+                            diaeten = 'grosse'; // Große Diät am Samstag
+                            zeitFirma = '06:00'; // 6 Stunden in der Firma
                         }
                         break;
                     case 'sunday':
@@ -1892,6 +2175,8 @@
                             start1 = '19:00';
                             end1 = '22:30';
                             einsatzpauschalen = 3; // Beispiel: 3 Einsatzpauschalen am Sonntag
+                            diaeten = 'grosse'; // Große Diät bei Notdienst
+                            zeitFirma = '01:00'; // Nur 1 Stunde in der Firma
                         }
                         break;
                 }
@@ -1903,6 +2188,12 @@
                 const dienst1Checkbox = document.getElementById(`dienst1_${day}`);
                 const dienst2Checkbox = document.getElementById(`dienst2_${day}`);
                 const einsatzpauschalenInput = document.getElementById(`einsatzpauschalen_${day}`);
+                const krankUrlaubSelect = document.getElementById(`krankUrlaub_${day}`);
+                const diaetenSelect = document.getElementById(`diaeten_${day}`);
+                const zeitausgleichHSelect = document.getElementById(`zeitausgleichH_${day}`);
+                const zeitausgleichMSelect = document.getElementById(`zeitausgleichM_${day}`);
+                const zeitFirmaHSelect = document.getElementById(`zeitFirmaH_${day}`);
+                const zeitFirmaMSelect = document.getElementById(`zeitFirmaM_${day}`);
 
                 if (startInput1) startInput1.value = start1;
                 if (endInput1) endInput1.value = end1;
@@ -1910,6 +2201,22 @@
                 if (dienst1Checkbox) dienst1Checkbox.checked = dienst1;
                 if (dienst2Checkbox) dienst2Checkbox.checked = dienst2;
                 if (einsatzpauschalenInput) einsatzpauschalenInput.value = einsatzpauschalen;
+                if (krankUrlaubSelect) krankUrlaubSelect.value = krankUrlaub;
+                if (diaetenSelect) diaetenSelect.value = diaeten;
+                
+                // Zeitausgleich setzen
+                if (zeitausgleich) {
+                    const [hours, minutes] = zeitausgleich.split(':');
+                    if (zeitausgleichHSelect) zeitausgleichHSelect.value = hours;
+                    if (zeitausgleichMSelect) zeitausgleichMSelect.value = minutes;
+                }
+                
+                // Zeit in der Firma setzen
+                if (zeitFirma) {
+                    const [hours, minutes] = zeitFirma.split(':');
+                    if (zeitFirmaHSelect) zeitFirmaHSelect.value = hours;
+                    if (zeitFirmaMSelect) zeitFirmaMSelect.value = minutes;
+                }
 
                 // Zusätzliche Arbeitszeit hinzufügen falls nötig
                 if (hasAdditionalWork) {
@@ -1929,6 +2236,10 @@
                 monthData[day].dienst1 = dienst1;
                 monthData[day].dienst2 = dienst2;
                 monthData[day].einsatzpauschalen = einsatzpauschalen;
+                monthData[day].krankUrlaub = krankUrlaub;
+                monthData[day].diaeten = diaeten;
+                monthData[day].zeitausgleich = zeitausgleich;
+                monthData[day].zeitFirma = zeitFirma;
                 updateDaySummary(day);
             }
 
