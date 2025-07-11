@@ -519,6 +519,7 @@
                     <p><strong>🌙 Nachtzeiten (Mo-Sa):</strong> 22:00-06:00 Uhr = 100% steuerfrei</p>
                     <p><strong>🎉 Wochenende:</strong> Sa 22:00 bis Mo 06:00 = 100% steuerfrei</p>
                     <p><strong>🎉 Sonntag & Feiertag:</strong> 00:00-24:00 Uhr = 100% steuerfrei</p>
+                    <p><strong>🎯 Österreichische Feiertage werden automatisch erkannt!</strong> (Neujahr, Heilige Drei Könige, Ostermontag, Tag der Arbeit, Christi Himmelfahrt, Pfingstmontag, Fronleichnam, Mariä Himmelfahrt, Nationalfeiertag, Allerheiligen, Mariä Empfängnis, Weihnachten, Stefanitag)</p>
                     <p><strong>🕐 3-Stunden-Regel (nur Werktage Mo-Sa):</strong><br>
                     Arbeitszeit ab 19:00 Uhr, die bis mindestens 22:00 Uhr geht und durchgehend ist (mindestens 3 Stunden), wird komplett steuerfrei bewertet.</p>
                     <ul style="margin: 10px 0; padding-left: 20px;">
@@ -645,6 +646,11 @@
                         <button class="btn-success" onclick="calculateMonthTotal()">📊 Monatsauswertung</button>
                         <button class="btn-secondary" onclick="clearMonth()">🗑️ Zurücksetzen</button>
                     </div>
+                </div>
+
+                <div id="holidaysInfo" style="display: none;" class="rules-info">
+                    <h4>🎉 Feiertage in diesem Monat:</h4>
+                    <div id="holidaysList"></div>
                 </div>
 
                 <div id="monthCalendar" class="month-calendar"></div>
@@ -1033,6 +1039,68 @@
             return days[date.getDay()];
         }
 
+        // Österreichische Feiertage für Wien berechnen
+        function calculateEaster(year) {
+            // Gaußsche Osterformel
+            const a = year % 19;
+            const b = Math.floor(year / 100);
+            const c = year % 100;
+            const d = Math.floor(b / 4);
+            const e = b % 4;
+            const f = Math.floor((b + 8) / 25);
+            const g = Math.floor((b - f + 1) / 3);
+            const h = (19 * a + b - d - g + 15) % 30;
+            const i = Math.floor(c / 4);
+            const k = c % 4;
+            const l = (32 + 2 * e + 2 * i - h - k) % 7;
+            const m = Math.floor((a + 11 * h + 22 * l) / 451);
+            const n = Math.floor((h + l - 7 * m + 114) / 31);
+            const p = (h + l - 7 * m + 114) % 31;
+            return new Date(year, n - 1, p + 1);
+        }
+
+        function getAustrianHolidays(year) {
+            const easter = calculateEaster(year);
+            const holidays = {};
+
+            // Fixe Feiertage
+            holidays[`${year}-01-01`] = 'Neujahr';
+            holidays[`${year}-01-06`] = 'Heilige Drei Könige';
+            holidays[`${year}-05-01`] = 'Tag der Arbeit';
+            holidays[`${year}-08-15`] = 'Mariä Himmelfahrt';
+            holidays[`${year}-10-26`] = 'Nationalfeiertag';
+            holidays[`${year}-11-01`] = 'Allerheiligen';
+            holidays[`${year}-12-08`] = 'Mariä Empfängnis';
+            holidays[`${year}-12-25`] = 'Weihnachten';
+            holidays[`${year}-12-26`] = 'Stefanitag';
+
+            // Variable Feiertage (abhängig von Ostern)
+            const easterMonday = new Date(easter);
+            easterMonday.setDate(easter.getDate() + 1);
+            holidays[easterMonday.toISOString().split('T')[0]] = 'Ostermontag';
+
+            const ascensionDay = new Date(easter);
+            ascensionDay.setDate(easter.getDate() + 39);
+            holidays[ascensionDay.toISOString().split('T')[0]] = 'Christi Himmelfahrt';
+
+            const whitMonday = new Date(easter);
+            whitMonday.setDate(easter.getDate() + 50);
+            holidays[whitMonday.toISOString().split('T')[0]] = 'Pfingstmontag';
+
+            const corpusChristi = new Date(easter);
+            corpusChristi.setDate(easter.getDate() + 60);
+            holidays[corpusChristi.toISOString().split('T')[0]] = 'Fronleichnam';
+
+            return holidays;
+        }
+
+        function isHoliday(date) {
+            const year = date.getFullYear();
+            const holidays = getAustrianHolidays(year);
+            const dateString = date.toISOString().split('T')[0];
+            return holidays[dateString] || null;
+        }
+
         function getTimeRules(day, isHoliday) {
             if (isHoliday || day === 'sunday') {
                 return [{ start: 0, end: 1440, type: 'tax_free_100' }];
@@ -1230,8 +1298,19 @@
 
         function calculateWorkTime() {
             const day = document.getElementById('workday').value;
-            const isHoliday = document.getElementById('isHoliday').value === 'true';
+            let isHoliday = document.getElementById('isHoliday').value === 'true';
             const hasPause = document.getElementById('hasPause').checked;
+            
+            // Prüfe automatisch auf österreichische Feiertage (für aktuelles Jahr)
+            const currentYear = new Date().getFullYear();
+            const testDate = new Date(currentYear, 0, 1); // Dummy-Datum für Feiertags-Check
+            
+            // Setze ein realistisches Testdatum basierend auf dem Wochentag
+            const dayIndex = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].indexOf(day);
+            testDate.setDate(testDate.getDate() + dayIndex);
+            
+            // Auto-Feiertag nur als Hinweis anzeigen, nicht automatisch setzen
+            const autoHolidayName = isHoliday ? null : isHoliday(testDate);
             
             // Sammle alle Arbeitszeit-Blöcke
             const timeBlocks = [];
@@ -1351,24 +1430,64 @@
             const calendarDiv = document.getElementById('monthCalendar');
             calendarDiv.innerHTML = '';
 
+            // Sammle Feiertage für diesen Monat
+            const monthHolidays = [];
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month - 1, day);
+                const holidayName = isHoliday(date);
+                if (holidayName) {
+                    monthHolidays.push({ day, name: holidayName, date: getFullWeekdayName(date) });
+                }
+            }
+
+            // Zeige Feiertags-Info an
+            const holidaysInfoDiv = document.getElementById('holidaysInfo');
+            const holidaysListDiv = document.getElementById('holidaysList');
+            
+            if (monthHolidays.length > 0) {
+                holidaysInfoDiv.style.display = 'block';
+                holidaysListDiv.innerHTML = monthHolidays.map(h => 
+                    `<strong>${h.day}. ${new Date(year, month - 1, 1).toLocaleDateString('de-DE', { month: 'long' })} (${h.date}):</strong> ${h.name}`
+                ).join('<br>');
+            } else {
+                holidaysInfoDiv.style.display = 'none';
+            }
+
             for (let day = 1; day <= daysInMonth; day++) {
                 const date = new Date(year, month - 1, day);
                 const weekday = getWeekday(date);
                 const weekdayName = getWeekdayName(date);
                 const fullWeekdayName = getFullWeekdayName(date);
                 
+                // Prüfe auf Feiertag
+                const holidayName = isHoliday(date);
+                const isHolidayDay = holidayName !== null;
+                
                 const dayCard = document.createElement('div');
                 dayCard.className = 'day-card';
+                
+                // Spezielle Styling für Feiertage
+                if (isHolidayDay) {
+                    dayCard.style.border = '2px solid #dc3545';
+                    dayCard.style.background = 'linear-gradient(135deg, #fff5f5, #ffe6e6)';
+                }
+                
                 dayCard.innerHTML = `
                     <div class="day-header">
-                        <div class="day-number">${day}.</div>
-                        <div class="weekday">${day}. ${fullWeekdayName}</div>
+                        <div class="day-number" style="${isHolidayDay ? 'color: #dc3545; font-weight: bold;' : ''}">${day}.</div>
+                        <div class="weekday" style="${isHolidayDay ? 'color: #dc3545;' : ''}">${day}. ${fullWeekdayName}</div>
                     </div>
+                    
+                    ${isHolidayDay ? `
+                    <div style="background: #dc3545; color: white; padding: 5px; border-radius: 5px; margin-bottom: 10px; text-align: center; font-size: 0.8rem; font-weight: bold;">
+                        🎉 ${holidayName}
+                    </div>
+                    ` : ''}
                     
                     <div class="form-field" style="margin-bottom: 10px;">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px;">
                             <label style="font-size: 0.8rem;">
-                                <input type="checkbox" id="holiday_${day}" onchange="updateDaySummary(${day})"> Feiertag
+                                <input type="checkbox" id="holiday_${day}" onchange="updateDaySummary(${day})" ${isHolidayDay ? 'checked' : ''}> Feiertag
                             </label>
                             <label style="font-size: 0.8rem;">
                                 <input type="checkbox" id="pause_${day}" onchange="updateDaySummary(${day})"> Pause (0:45h)
@@ -1483,7 +1602,7 @@
                     </div>
                     
                     <div id="summary_${day}" class="day-summary">
-                        Keine Arbeitszeit eingetragen
+                        ${isHolidayDay ? `<strong style="color: #dc3545;">Feiertag: ${holidayName}</strong>` : 'Keine Arbeitszeit eingetragen'}
                     </div>
                 `;
                 
@@ -1492,7 +1611,8 @@
                 monthData[day] = {
                     weekday: weekday,
                     date: date,
-                    isHoliday: false,
+                    isHoliday: isHolidayDay,
+                    holidayName: holidayName,
                     hasPause: false,
                     dienst1: false,
                     dienst2: false,
@@ -2159,6 +2279,7 @@
             document.getElementById('monthCalendar').innerHTML = '';
             document.getElementById('monthSummary').style.display = 'none';
             document.getElementById('printTable').innerHTML = '';
+            document.getElementById('holidaysInfo').style.display = 'none';
         }
 
         // Beispielwerte setzen beim Laden
