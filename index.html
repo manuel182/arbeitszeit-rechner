@@ -515,12 +515,17 @@
             <!-- Einzelberechnung -->
             <div id="single-mode" class="section active">
                 <div class="rules-info">
-                    <h4>📋 Besondere 3-Stunden-Regel:</h4>
-                    <p><strong>Wenn Sie in kritischen Zeitbereichen 3+ Stunden durchgehend arbeiten, werden ALLE Stunden in diesem Bereich als 100% steuerfrei bewertet:</strong></p>
+                    <h4>📋 Arbeitszeit-Regelungen:</h4>
+                    <p><strong>🌙 Nachtzeiten (Mo-Sa):</strong> 22:00-06:00 Uhr = 100% steuerfrei</p>
+                    <p><strong>🎉 Wochenende:</strong> Sa 22:00 bis Mo 06:00 = 100% steuerfrei</p>
+                    <p><strong>🎉 Sonntag & Feiertag:</strong> 00:00-24:00 Uhr = 100% steuerfrei</p>
+                    <p><strong>🕐 3-Stunden-Regel (nur Werktage Mo-Sa):</strong><br>
+                    Arbeitszeit ab 19:00 Uhr, die bis mindestens 22:00 Uhr geht und durchgehend ist (mindestens 3 Stunden), wird komplett steuerfrei bewertet.</p>
                     <ul style="margin: 10px 0; padding-left: 20px;">
-                        <li><strong>Mo-Do:</strong> 16:45-22:00 Uhr (+ Nachtstunden 0:00-6:00)</li>
-                        <li><strong>Fr:</strong> 12:00-22:00 Uhr (+ Nachtstunden 0:00-6:00)</li>
-                        <li><strong>Sa:</strong> 6:00-22:00 Uhr (+ Nachtstunden 0:00-6:00)</li>
+                        <li><strong>✅ Steuerfrei:</strong> 19:00-22:00 (durchgehend, 3 Stunden)</li>
+                        <li><strong>✅ Steuerfrei:</strong> 19:00-23:00 (durchgehend, 4 Stunden)</li>
+                        <li><strong>✅ Steuerfrei:</strong> 20:00-23:30 (durchgehend, 3,5 Stunden)</li>
+                        <li><strong>❌ Versteuert:</strong> 19:00-22:00 + 22:30-01:00 (unterbrochen)</li>
                     </ul>
                     <p><strong>📋 Pausenregelung:</strong> Kreuzen Sie "Pause" pro Tag an, wenn eine 45-Minuten-Pause von der Arbeitszeit abgezogen werden soll.</p>
                 </div>
@@ -1035,33 +1040,43 @@
 
             switch (day) {
                 case 'monday':
-                case 'tuesday':
-                case 'wednesday':
-                case 'thursday':
                     return [
-                        { start: 0, end: 360, type: 'tax_free_100' },      // 0:00-6:00
+                        { start: 0, end: 360, type: 'tax_free_100' },      // 0:00-6:00 (Nacht von So auf Mo)
                         { start: 360, end: 450, type: 'surcharge_50' },    // 6:00-7:30
                         { start: 450, end: 720, type: 'normal' },          // 7:30-12:00 (4.5h Normal)
                         { start: 720, end: 765, type: 'normal' },          // 12:00-12:45 (0.75h Normal oder Pause)
                         { start: 765, end: 1005, type: 'normal' },         // 12:45-16:45 (4h Normal)
                         { start: 1005, end: 1125, type: 'surcharge_50' },  // 16:45-18:45
                         { start: 1125, end: 1320, type: 'taxed_100' },     // 18:45-22:00
-                        { start: 1320, end: 1440, type: 'tax_free_100' }   // 22:00-24:00
+                        { start: 1320, end: 1440, type: 'tax_free_100' }   // 22:00-24:00 (Nacht)
+                    ];
+                case 'tuesday':
+                case 'wednesday':
+                case 'thursday':
+                    return [
+                        { start: 0, end: 360, type: 'tax_free_100' },      // 0:00-6:00 (Nacht)
+                        { start: 360, end: 450, type: 'surcharge_50' },    // 6:00-7:30
+                        { start: 450, end: 720, type: 'normal' },          // 7:30-12:00 (4.5h Normal)
+                        { start: 720, end: 765, type: 'normal' },          // 12:00-12:45 (0.75h Normal oder Pause)
+                        { start: 765, end: 1005, type: 'normal' },         // 12:45-16:45 (4h Normal)
+                        { start: 1005, end: 1125, type: 'surcharge_50' },  // 16:45-18:45
+                        { start: 1125, end: 1320, type: 'taxed_100' },     // 18:45-22:00
+                        { start: 1320, end: 1440, type: 'tax_free_100' }   // 22:00-24:00 (Nacht)
                     ];
                 case 'friday':
                     return [
-                        { start: 0, end: 360, type: 'tax_free_100' },      // 0:00-6:00
+                        { start: 0, end: 360, type: 'tax_free_100' },      // 0:00-6:00 (Nacht)
                         { start: 360, end: 450, type: 'surcharge_50' },    // 6:00-7:30
                         { start: 450, end: 720, type: 'normal' },          // 7:30-12:00 (4.5h Normal)
                         { start: 720, end: 1125, type: 'surcharge_50' },   // 12:00-18:45 (50% Zuschlag)
                         { start: 1125, end: 1320, type: 'taxed_100' },     // 18:45-22:00
-                        { start: 1320, end: 1440, type: 'tax_free_100' }   // 22:00-24:00
+                        { start: 1320, end: 1440, type: 'tax_free_100' }   // 22:00-24:00 (Nacht)
                     ];
                 case 'saturday':
                     return [
-                        { start: 0, end: 360, type: 'tax_free_100' },      // 0:00-6:00
+                        { start: 0, end: 360, type: 'tax_free_100' },      // 0:00-6:00 (Nacht von Fr auf Sa)
                         { start: 360, end: 1320, type: 'taxed_100' },      // 6:00-22:00
-                        { start: 1320, end: 1440, type: 'tax_free_100' }   // 22:00-24:00
+                        { start: 1320, end: 1440, type: 'tax_free_100' }   // 22:00-24:00 (Beginn Wochenende)
                     ];
                 default:
                     return [];
@@ -1087,63 +1102,27 @@
                 endTime += 1440; // Füge 24 Stunden hinzu
             }
 
-            // Definiere kritische Zeitbereiche für 3-Stunden-Regel je nach Wochentag
-            let criticalPeriods = [];
+            // Sonntag und Feiertag sind immer 100% steuerfrei - keine weitere Prüfung nötig
+            if (day === 'sunday') {
+                result.tax_free_100 = endTime - startTime;
+                return result;
+            }
+
+            // Prüfe die 3-Stunden-Regel nur an Werktagen: Ab 19:00 bis mindestens 22:00 und durchgehend = steuerfrei
+            const start19 = 19 * 60; // 19:00 in Minuten
+            const end22 = 22 * 60;   // 22:00 in Minuten
             
-            switch (day) {
-                case 'monday':
-                case 'tuesday':
-                case 'wednesday':
-                case 'thursday':
-                    criticalPeriods = [
-                        { start: 1005, end: 1320, name: 'evening' }, // 16:45-22:00
-                        { start: 0, end: 360, name: 'night' }       // 0:00-6:00
-                    ];
-                    break;
-                case 'friday':
-                    criticalPeriods = [
-                        { start: 720, end: 1320, name: 'afternoon_evening' }, // 12:00-22:00
-                        { start: 0, end: 360, name: 'night' }                 // 0:00-6:00
-                    ];
-                    break;
-                case 'saturday':
-                    criticalPeriods = [
-                        { start: 360, end: 1320, name: 'day_evening' }, // 6:00-22:00
-                        { start: 0, end: 360, name: 'night' }           // 0:00-6:00
-                    ];
-                    break;
-                default:
-                    criticalPeriods = [];
+            // KORREKTUR: >= statt > für die 3-Stunden-Regel
+            // Überprüfe ob diese Arbeitszeit die 3-Stunden-Regel erfüllt
+            const isThreeHourRule = (startTime >= start19) && (endTime >= end22) && ((endTime - startTime) >= 180);
+            
+            if (isThreeHourRule) {
+                // Gesamte Arbeitszeit ist steuerfrei
+                result.tax_free_100 = endTime - startTime;
+                return result;
             }
 
-            // Prüfe 3-Stunden-Regel für jeden kritischen Zeitbereich
-            const threeHourPeriods = [];
-            for (const period of criticalPeriods) {
-                let periodStart = period.start;
-                let periodEnd = period.end;
-                
-                // Behandle Perioden über Mitternacht
-                if (startTime >= 1440) {
-                    periodStart += 1440;
-                    periodEnd += 1440;
-                }
-                
-                const workInPeriodStart = Math.max(startTime, periodStart);
-                const workInPeriodEnd = Math.min(endTime, periodEnd);
-                
-                if (workInPeriodStart < workInPeriodEnd) {
-                    const minutesInPeriod = workInPeriodEnd - workInPeriodStart;
-                    if (minutesInPeriod >= 180) { // 3+ Stunden in diesem Zeitbereich
-                        threeHourPeriods.push({
-                            start: workInPeriodStart,
-                            end: workInPeriodEnd,
-                            name: period.name
-                        });
-                    }
-                }
-            }
-
-            // Normale Berechnung nach Zeitregeln
+            // Normale Berechnung nach Zeitregeln (wenn 3-Stunden-Regel nicht zutrifft)
             for (const rule of rules) {
                 let ruleStart = rule.start;
                 let ruleEnd = rule.end;
@@ -1174,18 +1153,7 @@
                         }
                     }
                     
-                    // Prüfe ob dieser Bereich von 3-Stunden-Regel betroffen ist
-                    let isThreeHourPeriod = false;
-                    for (const threeHour of threeHourPeriods) {
-                        if (segmentStart >= threeHour.start && segmentEnd <= threeHour.end) {
-                            isThreeHourPeriod = true;
-                            break;
-                        }
-                    }
-                    
-                    if (isThreeHourPeriod && (ruleType === 'surcharge_50' || ruleType === 'taxed_100')) {
-                        result.tax_free_100 += minutes;
-                    } else if (result[ruleType] !== undefined) {
+                    if (result[ruleType] !== undefined) {
                         result[ruleType] += minutes;
                     }
                 }
@@ -1217,12 +1185,14 @@
             };
 
             // Berechne alle Arbeitszeit-Blöcke
+            // Die 3-Stunden-Regel wird für JEDEN Block einzeln geprüft
             for (const block of timeBlocks) {
                 if (block.start && block.end) {
                     const start = timeToMinutes(block.start);
                     const end = timeToMinutes(block.end);
-                    const result = calculateTimeSegment(start, end, rules, day, hasPause);
                     
+                    // Prüfe für jeden Block die 3-Stunden-Regel
+                    const result = calculateTimeSegment(start, end, rules, day, hasPause);
                     Object.keys(totalResult).forEach(key => {
                         if (key !== 'break_time' && key !== 'display_break_time') {
                             totalResult[key] += result[key];
@@ -1247,6 +1217,8 @@
 
             return totalResult;
         }
+
+
 
         function switchMode(mode) {
             document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
@@ -2187,181 +2159,6 @@
             document.getElementById('monthCalendar').innerHTML = '';
             document.getElementById('monthSummary').style.display = 'none';
             document.getElementById('printTable').innerHTML = '';
-        }
-
-        function fillExampleData() {
-            if (Object.keys(monthData).length === 0) {
-                alert('Bitte erst einen Monat generieren.');
-                return;
-            }
-
-            // Beispieldaten für verschiedene Wochentage
-            for (const day in monthData) {
-                const dayData = monthData[day];
-                const weekday = dayData.weekday;
-                
-                // Standard Arbeitszeiten je nach Wochentag
-                let start1 = '', end1 = '';
-                let hasPause = false;
-                let hasAdditionalWork = false;
-                let start2 = '', end2 = '';
-                let dienst1 = false;
-                let dienst2 = false;
-                let einsatzpauschalen = 0;
-                let krankUrlaub = '';
-                let diaeten = '';
-                let zeitausgleich = '';
-                let zeitFirma = '';
-                
-                switch (weekday) {
-                    case 'monday':
-                    case 'tuesday':
-                    case 'wednesday':
-                    case 'thursday':
-                        start1 = '07:30';
-                        end1 = '16:45';
-                        hasPause = true;
-                        zeitFirma = '08:00'; // 8 Stunden in der Firma
-                        
-                        // Gelegentlich Abendeinsätze (ohne Überschneidung)
-                        if ((weekday === 'tuesday' || weekday === 'thursday') && day <= 15) {
-                            hasAdditionalWork = true;
-                            start2 = '18:00'; // Nach der Hauptarbeitszeit um 16:45
-                            end2 = '22:00';
-                            diaeten = 'mittlere'; // Bei Abendeinsätzen mittlere Diät
-                            zeitFirma = '08:00'; // Teilweise in der Firma, Rest Montagezulage
-                        }
-                        
-                        // Beispiel für Dienst 1 an bestimmten Tagen
-                        if (weekday === 'monday' && day <= 10) {
-                            dienst1 = true;
-                        }
-                        
-                        // Zeitausgleich an bestimmten Tagen
-                        if (weekday === 'wednesday' && day <= 8) {
-                            zeitausgleich = '02:00';
-                        }
-                        
-                        // Externe Arbeit ohne Zeit in der Firma
-                        if (weekday === 'tuesday' && day > 20) {
-                            zeitFirma = ''; // Keine Firmenzeit = gesamte Arbeitszeit wird Montagezulage
-                        }
-                        
-                        // Gelegentlich krank
-                        if (weekday === 'thursday' && day === 20) {
-                            krankUrlaub = 'krank';
-                            start1 = ''; end1 = ''; // Keine Arbeitszeit bei Krankheit
-                            hasPause = false;
-                            zeitFirma = '';
-                        }
-                        break;
-                    case 'friday':
-                        start1 = '07:30';
-                        end1 = '12:00';
-                        hasPause = false;
-                        zeitFirma = '04:30'; // 4.5 Stunden in der Firma
-                        
-                        // Freitags manchmal Dienst 2 und kleine Diät
-                        if (day <= 15) {
-                            dienst2 = true;
-                            diaeten = 'kleine';
-                        }
-                        
-                        // Urlaub an einem Freitag
-                        if (day === 25) {
-                            krankUrlaub = 'urlaub';
-                            start1 = ''; end1 = '';
-                            hasPause = false;
-                            dienst2 = false;
-                            diaeten = '';
-                            zeitFirma = '';
-                        }
-                        break;
-                    case 'saturday':
-                        // Nur jeden 2. Samstag
-                        if (day % 2 === 0) {
-                            start1 = '08:00';
-                            end1 = '14:00';
-                            einsatzpauschalen = 2; // Beispiel: 2 Einsatzpauschalen am Samstag
-                            diaeten = 'grosse'; // Große Diät am Samstag
-                            zeitFirma = ''; // Externe Arbeit = gesamte Zeit ist Montagezulage
-                        }
-                        break;
-                    case 'sunday':
-                        // Nur gelegentlich Notdienst
-                        if (day === 15) {
-                            start1 = '19:00';
-                            end1 = '22:30';
-                            einsatzpauschalen = 3; // Beispiel: 3 Einsatzpauschalen am Sonntag
-                            diaeten = 'grosse'; // Große Diät bei Notdienst
-                            zeitFirma = ''; // Notdienst = gesamte Zeit ist Montagezulage
-                        }
-                        break;
-                }
-
-                // Eingaben setzen
-                const startInput1 = document.getElementById(`start1_${day}`);
-                const endInput1 = document.getElementById(`end1_${day}`);
-                const pauseCheckbox = document.getElementById(`pause_${day}`);
-                const dienst1Checkbox = document.getElementById(`dienst1_${day}`);
-                const dienst2Checkbox = document.getElementById(`dienst2_${day}`);
-                const einsatzpauschalenInput = document.getElementById(`einsatzpauschalen_${day}`);
-                const krankUrlaubSelect = document.getElementById(`krankUrlaub_${day}`);
-                const diaetenSelect = document.getElementById(`diaeten_${day}`);
-                const zeitausgleichHSelect = document.getElementById(`zeitausgleichH_${day}`);
-                const zeitausgleichMSelect = document.getElementById(`zeitausgleichM_${day}`);
-                const zeitFirmaHSelect = document.getElementById(`zeitFirmaH_${day}`);
-                const zeitFirmaMSelect = document.getElementById(`zeitFirmaM_${day}`);
-
-                if (startInput1) startInput1.value = start1;
-                if (endInput1) endInput1.value = end1;
-                if (pauseCheckbox) pauseCheckbox.checked = hasPause;
-                if (dienst1Checkbox) dienst1Checkbox.checked = dienst1;
-                if (dienst2Checkbox) dienst2Checkbox.checked = dienst2;
-                if (einsatzpauschalenInput) einsatzpauschalenInput.value = einsatzpauschalen;
-                if (krankUrlaubSelect) krankUrlaubSelect.value = krankUrlaub;
-                if (diaetenSelect) diaetenSelect.value = diaeten;
-                
-                // Zeitausgleich setzen
-                if (zeitausgleich) {
-                    const [hours, minutes] = zeitausgleich.split(':');
-                    if (zeitausgleichHSelect) zeitausgleichHSelect.value = hours;
-                    if (zeitausgleichMSelect) zeitausgleichMSelect.value = minutes;
-                }
-                
-                // Zeit in der Firma setzen
-                if (zeitFirma) {
-                    const [hours, minutes] = zeitFirma.split(':');
-                    if (zeitFirmaHSelect) zeitFirmaHSelect.value = hours;
-                    if (zeitFirmaMSelect) zeitFirmaMSelect.value = minutes;
-                }
-
-                // Zusätzliche Arbeitszeit hinzufügen falls nötig
-                if (hasAdditionalWork) {
-                    // Füge zweiten Block hinzu
-                    if (monthData[day].timeBlocks < 2) {
-                        addDayTimeBlock(day);
-                    }
-                    
-                    const startInput2 = document.getElementById(`start2_${day}`);
-                    const endInput2 = document.getElementById(`end2_${day}`);
-                    
-                    if (startInput2) startInput2.value = start2;
-                    if (endInput2) endInput2.value = end2;
-                }
-
-                monthData[day].hasPause = hasPause;
-                monthData[day].dienst1 = dienst1;
-                monthData[day].dienst2 = dienst2;
-                monthData[day].einsatzpauschalen = einsatzpauschalen;
-                monthData[day].krankUrlaub = krankUrlaub;
-                monthData[day].diaeten = diaeten;
-                monthData[day].zeitausgleich = zeitausgleich;
-                monthData[day].zeitFirma = zeitFirma;
-                updateDaySummary(day);
-            }
-
-            alert('Beispieldaten wurden eingefügt! Sie können diese nun bearbeiten oder als Vorlage verwenden.');
         }
 
         // Beispielwerte setzen beim Laden
