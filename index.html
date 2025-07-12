@@ -203,6 +203,11 @@
             align-items: center;
         }
 
+        .time-blocks {
+            display: grid;
+            gap: 20px;
+        }
+
         .time-block {
             background: white;
             border: 2px solid #e9ecef;
@@ -521,12 +526,13 @@
                     <p><strong>🎉 Sonntag & Feiertag:</strong> 00:00-24:00 Uhr = 100% steuerfrei</p>
                     <p><strong>🎯 Österreichische Feiertage werden automatisch erkannt!</strong> (Neujahr, Heilige Drei Könige, Ostermontag, Tag der Arbeit, Christi Himmelfahrt, Pfingstmontag, Fronleichnam, Mariä Himmelfahrt, Nationalfeiertag, Allerheiligen, Mariä Empfängnis, Weihnachten, Stefanitag)</p>
                     <p><strong>🕐 3-Stunden-Regel (nur Werktage Mo-Sa):</strong><br>
-                    Arbeitszeit ab 19:00 Uhr, die bis mindestens 22:00 Uhr geht und durchgehend ist (mindestens 3 Stunden), wird komplett steuerfrei bewertet.</p>
+                    Wenn eine Arbeitszeit von 19:00 bis mindestens 22:00 Uhr geht (mindestens 3 Stunden), dann ist der Zeitraum ab 19:00 Uhr bis zum Ende 100% steuerfrei. Der Teil vor 19:00 wird normal berechnet.</p>
                     <ul style="margin: 10px 0; padding-left: 20px;">
-                        <li><strong>✅ Steuerfrei:</strong> 19:00-22:00 (durchgehend, 3 Stunden)</li>
-                        <li><strong>✅ Steuerfrei:</strong> 19:00-23:00 (durchgehend, 4 Stunden)</li>
-                        <li><strong>✅ Steuerfrei:</strong> 20:00-23:30 (durchgehend, 3,5 Stunden)</li>
-                        <li><strong>❌ Versteuert:</strong> 19:00-22:00 + 22:30-01:00 (unterbrochen)</li>
+                        <li><strong>✅ Teilweise steuerfrei:</strong> 07:30-22:45 → vor 19:00 normal, ab 19:00 steuerfrei</li>
+                        <li><strong>✅ Komplett steuerfrei:</strong> 19:00-22:00 (nur Abendschicht)</li>
+                        <li><strong>✅ Komplett steuerfrei:</strong> 20:00-23:30 (nur Abendschicht)</li>
+                        <li><strong>✅ Teilweise steuerfrei:</strong> 16:00-23:00 → 16:00-19:00 normal, 19:00-23:00 steuerfrei</li>
+                        <li><strong>❌ Normal berechnet:</strong> 19:00-21:30 (nur 2,5 Stunden, nicht bis 22:00)</li>
                     </ul>
                     <p><strong>📋 Pausenregelung:</strong> Kreuzen Sie "Pause" pro Tag an, wenn eine 45-Minuten-Pause von der Arbeitszeit abgezogen werden soll.</p>
                 </div>
@@ -787,6 +793,15 @@
         }
 
         function populateHourOptions(selectElement) {
+            if (!selectElement) {
+                return;
+            }
+            
+            // Lösche existierende Optionen außer der ersten (die "--" Option)
+            while (selectElement.children.length > 1) {
+                selectElement.removeChild(selectElement.lastChild);
+            }
+            
             for (let i = 0; i < 24; i++) {
                 const option = document.createElement('option');
                 const hourStr = i.toString().padStart(2, '0');
@@ -1151,12 +1166,6 @@
             }
         }
 
-        function timeToMinutes(timeStr) {
-            if (!timeStr) return 0;
-            const [hours, minutes] = timeStr.split(':').map(Number);
-            return hours * 60 + minutes;
-        }
-
         function calculateTimeSegment(startTime, endTime, rules, day, hasPause = false) {
             const result = {
                 normal: 0,
@@ -1176,21 +1185,55 @@
                 return result;
             }
 
-            // Prüfe die 3-Stunden-Regel nur an Werktagen: Ab 19:00 bis mindestens 22:00 und durchgehend = steuerfrei
+            // 3-Stunden-Regel: Wenn Block von 19:00 bis mindestens 22:00 geht (mindestens 3h)
+            // dann ist der Zeitraum ab 19:00 bis Ende steuerfrei, der Rest wird normal berechnet
             const start19 = 19 * 60; // 19:00 in Minuten
             const end22 = 22 * 60;   // 22:00 in Minuten
             
-            // KORREKTUR: >= statt > für die 3-Stunden-Regel
-            // Überprüfe ob diese Arbeitszeit die 3-Stunden-Regel erfüllt
-            const isThreeHourRule = (startTime >= start19) && (endTime >= end22) && ((endTime - startTime) >= 180);
+            // Prüfe ob Block die 3-Stunden-Regel erfüllt:
+            // 1. Block überschneidet sich mit Zeit ab 19:00
+            // 2. Block geht mindestens bis 22:00
+            // 3. Zeitraum von 19:00 bis Ende ist mindestens 3 Stunden
             
-            if (isThreeHourRule) {
-                // Gesamte Arbeitszeit ist steuerfrei
-                result.tax_free_100 = endTime - startTime;
-                return result;
+            const blockOverlaps19 = endTime > start19 && startTime < end22;
+            const blockEndsAtOrAfter22 = endTime >= end22;
+            
+            if (blockOverlaps19 && blockEndsAtOrAfter22) {
+                const timeFrom19 = endTime - Math.max(startTime, start19);
+                
+                if (timeFrom19 >= 180) { // mindestens 3 Stunden ab 19:00
+                    // TEIL-BERECHNUNG: Block aufteilen
+                    
+                    // Teil VOR 19:00: normale Berechnung
+                    if (startTime < start19) {
+                        const preResult = calculateTimeSegmentNormal(startTime, start19, rules, day, hasPause);
+                        result.normal += preResult.normal;
+                        result.surcharge_50 += preResult.surcharge_50;
+                        result.taxed_100 += preResult.taxed_100;
+                        result.tax_free_100 += preResult.tax_free_100;
+                    }
+                    
+                    // Teil AB 19:00: 100% steuerfrei
+                    const steuerfrei_start = Math.max(startTime, start19);
+                    result.tax_free_100 += endTime - steuerfrei_start;
+                    
+                    return result;
+                }
             }
 
-            // Normale Berechnung nach Zeitregeln (wenn 3-Stunden-Regel nicht zutrifft)
+            // Normale Berechnung (wenn 3-Stunden-Regel nicht zutrifft)
+            return calculateTimeSegmentNormal(startTime, endTime, rules, day, hasPause);
+        }
+
+        // Hilfsfunktion für normale Zeitberechnung
+        function calculateTimeSegmentNormal(startTime, endTime, rules, day, hasPause = false) {
+            const result = {
+                normal: 0,
+                surcharge_50: 0,
+                taxed_100: 0,
+                tax_free_100: 0
+            };
+
             for (const rule of rules) {
                 let ruleStart = rule.start;
                 let ruleEnd = rule.end;
@@ -1286,8 +1329,6 @@
             return totalResult;
         }
 
-
-
         function switchMode(mode) {
             document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
@@ -1300,17 +1341,6 @@
             const day = document.getElementById('workday').value;
             let isHoliday = document.getElementById('isHoliday').value === 'true';
             const hasPause = document.getElementById('hasPause').checked;
-            
-            // Prüfe automatisch auf österreichische Feiertage (für aktuelles Jahr)
-            const currentYear = new Date().getFullYear();
-            const testDate = new Date(currentYear, 0, 1); // Dummy-Datum für Feiertags-Check
-            
-            // Setze ein realistisches Testdatum basierend auf dem Wochentag
-            const dayIndex = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'].indexOf(day);
-            testDate.setDate(testDate.getDate() + dayIndex);
-            
-            // Auto-Feiertag nur als Hinweis anzeigen, nicht automatisch setzen
-            const autoHolidayName = isHoliday ? null : isHoliday(testDate);
             
             // Sammle alle Arbeitszeit-Blöcke
             const timeBlocks = [];
@@ -2284,20 +2314,26 @@
 
         // Beispielwerte setzen beim Laden
         document.addEventListener('DOMContentLoaded', function() {
-            // Populate hour options for initial time block
-            populateHourOptions(document.getElementById('startHour1'));
-            populateHourOptions(document.getElementById('endHour1'));
-            
-            // Standardwerte für Einzelberechnung setzen
-            document.getElementById('startHour1').value = '07';
-            document.getElementById('startMin1').value = '30';
-            document.getElementById('endHour1').value = '16';
-            document.getElementById('endMin1').value = '45';
-            
-            // Aktuellen Monat setzen
-            const now = new Date();
-            const currentMonth = now.getFullYear() + '-' + (now.getMonth() + 1).toString().padStart(2, '0');
-            document.getElementById('selectedMonth').value = currentMonth;
+            // Warte einen Moment, um sicherzustellen, dass alle Elemente geladen sind
+            setTimeout(() => {
+                // Populate hour options for initial time block
+                populateHourOptions(document.getElementById('startHour1'));
+                populateHourOptions(document.getElementById('endHour1'));
+                
+                // Standardwerte für Einzelberechnung setzen
+                document.getElementById('startHour1').value = '07';
+                document.getElementById('startMin1').value = '30';
+                document.getElementById('endHour1').value = '16';
+                document.getElementById('endMin1').value = '45';
+                
+                // Aktuellen Monat setzen
+                const now = new Date();
+                const currentMonth = now.getFullYear() + '-' + (now.getMonth() + 1).toString().padStart(2, '0');
+                const monthSelect = document.getElementById('selectedMonth');
+                if (monthSelect) {
+                    monthSelect.value = currentMonth;
+                }
+            }, 100);
         });
     </script>
 </body>
