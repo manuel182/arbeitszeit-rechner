@@ -1179,7 +1179,8 @@
                 endTime += 1440; // Füge 24 Stunden hinzu
             }
 
-            // Sonntag und Feiertag sind immer 100% steuerfrei - keine weitere Prüfung nötig
+            // Sonntag ist immer 100% steuerfrei
+            // (Feiertage werden jetzt in calculateDayWorkTime behandelt)
             if (day === 'sunday') {
                 result.tax_free_100 = endTime - startTime;
                 return result;
@@ -1295,14 +1296,34 @@
                 display_break_time: 0
             };
 
-            // Berechne alle Arbeitszeit-Blöcke
-            // Die 3-Stunden-Regel wird für JEDEN Block einzeln geprüft
+            // Zuerst alle Bruttozeiten berechnen
+            let bruttoMinutes = 0;
+            for (const block of timeBlocks) {
+                if (block.start && block.end) {
+                    const start = timeToMinutes(block.start);
+                    const end = timeToMinutes(block.end);
+                    bruttoMinutes += (end - start);
+                }
+            }
+
+            // Pausenzeit-Behandlung
+            if (hasPause) {
+                totalResult.break_time = 45;
+                totalResult.display_break_time = 45;
+            }
+
+            // Für Feiertage: Bruttozeit als steuerfrei markieren (Pause wird später in displayResults abgezogen)
+            if (isHoliday || day === 'sunday') {
+                totalResult.tax_free_100 = bruttoMinutes; // KEINE Pausenabziehung hier!
+                return totalResult;
+            }
+
+            // Normale Berechnung für Werktage
             for (const block of timeBlocks) {
                 if (block.start && block.end) {
                     const start = timeToMinutes(block.start);
                     const end = timeToMinutes(block.end);
                     
-                    // Prüfe für jeden Block die 3-Stunden-Regel
                     const result = calculateTimeSegment(start, end, rules, day, hasPause);
                     Object.keys(totalResult).forEach(key => {
                         if (key !== 'break_time' && key !== 'display_break_time') {
@@ -1312,18 +1333,14 @@
                 }
             }
 
-            // Pausenzeit-Behandlung
+            // Pausenzeit für Werktage anpassen
             if (hasPause) {
                 if (day === 'monday' || day === 'tuesday' || day === 'wednesday' || day === 'thursday') {
                     // Mo-Do: Pause ist bereits durch Überspringen der 12:00-12:45 Zeit berücksichtigt
-                    // Keine Abziehung nötig, nur zur Anzeige
                     totalResult.break_time = 0; // Nicht abziehen
                     totalResult.display_break_time = 45; // Nur zur Anzeige
-                } else {
-                    // Andere Tage: Pausenzeit abziehen
-                    totalResult.break_time = 45;
-                    totalResult.display_break_time = 45;
                 }
+                // Freitag/Samstag: break_time bleibt 45 (wird abgezogen)
             }
 
             return totalResult;
@@ -1381,6 +1398,17 @@
             // Nettoarbeitszeit (Bruttozeit minus tatsächliche Pausenzeit)
             const workMinutes = totalMinutes - result.break_time;
 
+            // DEBUG: Für Feiertage korrigieren
+            // Bei Feiertagen sollte tax_free_100 gleich workMinutes sein
+            const day = document.getElementById('workday').value;
+            const isHoliday = document.getElementById('isHoliday').value === 'true';
+            
+            let displayTaxFree = result.tax_free_100;
+            if (isHoliday || day === 'sunday') {
+                // Bei Feiertagen: steuerfreie Zeit = Nettoarbeitszeit
+                displayTaxFree = workMinutes;
+            }
+
             resultContent.innerHTML = `
                 <div class="result-item">
                     <div class="label">Gesamtarbeitszeit</div>
@@ -1400,7 +1428,7 @@
                 </div>
                 <div class="result-item">
                     <div class="label">100% steuerfrei</div>
-                    <div class="value">${minutesToHours(result.tax_free_100)} h</div>
+                    <div class="value">${minutesToHours(displayTaxFree)} h</div>
                 </div>
                 <div class="result-item">
                     <div class="label">Pausenzeit</div>
