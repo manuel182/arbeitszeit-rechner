@@ -664,6 +664,25 @@
             margin-top: 20px;
         }
 
+        .export-section button {
+            margin: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .export-section {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .export-section button {
+                width: 100%;
+                max-width: 300px;
+                margin: 0;
+            }
+        }
+
         .print-table {
             width: 100%;
             border-collapse: collapse;
@@ -2663,14 +2682,73 @@
             const dienst2MoDo = monthTotal.dienst2Stats.monday + monthTotal.dienst2Stats.tuesday + 
                                monthTotal.dienst2Stats.wednesday + monthTotal.dienst2Stats.thursday;
             
+            // Zähle Tage mit mehreren Arbeitszeiten für dynamische Skalierung
+            const [year, month] = monthInput.split('-').map(Number);
+            const daysInMonth = new Date(year, month, 0).getDate();
+            let additionalTimesCount = 0;
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                if (monthData[day] && !monthData[day].krankUrlaub) {
+                    let dayTimeBlocks = 0;
+                    for (let i = 1; i <= monthData[day].timeBlocks; i++) {
+                        const startTime = getTimeFromInput(`start${i}_${day}`);
+                        const endTime = getTimeFromInput(`end${i}_${day}`);
+                        if (startTime && endTime && startTime.trim() && endTime.trim()) {
+                            dayTimeBlocks++;
+                        }
+                    }
+                    if (dayTimeBlocks > 1) {
+                        additionalTimesCount++;
+                    }
+                }
+            }
+            
+            // Dynamische Skalierung basierend auf Anzahl zusätzlicher Arbeitszeiten
+            let scaleValue, fontSize, headerSize, subHeaderSize, infoSize, useCompactMode;
+            
+            if (additionalTimesCount <= 3) {
+                // Wenige zusätzliche Zeiten - Normal
+                scaleValue = '0.95';
+                fontSize = '7pt';
+                headerSize = '14pt';
+                subHeaderSize = '8pt';
+                infoSize = '10pt';
+                useCompactMode = false;
+            } else if (additionalTimesCount <= 8) {
+                // Einige zusätzliche Zeiten - Leicht kompakt
+                scaleValue = '0.93';
+                fontSize = '6.5pt';
+                headerSize = '13pt';
+                subHeaderSize = '7pt';
+                infoSize = '9pt';
+                useCompactMode = false;
+            } else if (additionalTimesCount <= 15) {
+                // Viele zusätzliche Zeiten - Kompakt
+                scaleValue = '0.90';
+                fontSize = '6pt';
+                headerSize = '12pt';
+                subHeaderSize = '6pt';
+                infoSize = '8pt';
+                useCompactMode = false;
+            } else {
+                // Sehr viele zusätzliche Zeiten - Sehr kompakt
+                scaleValue = '0.85';
+                fontSize = '5.5pt';
+                headerSize = '11pt';
+                subHeaderSize = '5.5pt';
+                infoSize = '7pt';
+                useCompactMode = true;
+            }
+            
             let tableHTML = `
-                <div style="max-width: 210mm; margin: 0 auto; padding: 15mm; font-family: Arial, sans-serif; font-size: 10pt; background: white;">
-                    <div style="text-align: center; margin-bottom: 15px;">
-                        <h2 style="margin: 0; font-size: 14pt; font-weight: bold;">STUNDENLISTE</h2>
-                        <div style="font-size: 8pt; margin-top: 3px;">(Mittagspause von 12:00 bis 12:45 Uhr)</div>
+                <div style="max-width: 210mm; margin: 0 auto; padding: 12mm; font-family: Arial, sans-serif; font-size: ${infoSize}; background: white;">
+                    <div style="text-align: center; margin-bottom: 12px;">
+                        <h2 style="margin: 0; font-size: ${headerSize}; font-weight: bold;">STUNDENLISTE</h2>
+                        <div style="font-size: ${subHeaderSize}; margin-top: 3px;">(Mittagspause von 12:00 bis 12:45 Uhr)</div>
+                        ${useCompactMode ? `<div style="font-size: ${subHeaderSize}; color: #666; margin-top: 3px; font-style: italic;">(Kompakte Darstellung für ${additionalTimesCount} Tage mit mehreren Arbeitszeiten)</div>` : ''}
                     </div>
                     
-                    <div style="margin-bottom: 15px; display: flex; justify-content: space-between;">
+                    <div style="margin-bottom: 12px; display: flex; justify-content: space-between; font-size: ${infoSize};">
                         <div>
                             <strong>NAME:</strong> <span style="border-bottom: 1px solid black; padding-bottom: 1px; min-width: 180px; display: inline-block;">${employeeName}</span>
                         </div>
@@ -2679,32 +2757,29 @@
                         </div>
                     </div>
                     
-                    <table style="width: 100%; border-collapse: collapse; border: 2px solid black; font-size: 7pt; margin-bottom: 20px;">
+                    <table style="width: 100%; border-collapse: collapse; border: 2px solid black; font-size: ${fontSize}; margin-bottom: 15px;">
                         <thead>
                             <tr style="border-bottom: 2px solid black;">
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 9%; background: #f0f0f0; font-size: 6pt;">Datum</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">VON</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">BIS</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0; font-size: 6pt;">GESAMT</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">Normal</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 6pt;">50%</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 6pt;">100%</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">100% frei</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">Dienst</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 4%; background: #f0f0f0; font-size: 6pt;">Eins.</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 6pt;">Diäten</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 6pt;">ZA</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">Montage</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 20%; background: #f0f0f0; font-size: 6pt;">Ruhezeit</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 9%; background: #f0f0f0;">Datum</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0;">VON</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0;">BIS</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0;">GESAMT</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0;">Normal</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0;">50%</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0;">100%</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0;">100% frei</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0;">Dienst</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 4%; background: #f0f0f0;">Eins.</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0;">Diäten</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0;">ZA</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0;">Montage</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 20%; background: #f0f0f0;">Ruhezeit</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
 
             // Generiere Tabellenzeilen für alle Tage des Monats
-            const [year, month] = monthInput.split('-').map(Number);
-            const daysInMonth = new Date(year, month, 0).getDate();
-            
             for (let day = 1; day <= daysInMonth; day++) {
                 const paddedDay = day.toString().padStart(2, '0');
                 const date = new Date(year, month - 1, day);
@@ -2723,6 +2798,7 @@
                 let montagezulageText = '';
                 let ruhezeitText = '';
                 let result = null;
+                let hasMultipleTimes = false;
                 
                 if (monthData[day]) {
                     // Bei Krank/Urlaub keine normalen Arbeitszeiten
@@ -2746,7 +2822,15 @@
                         }
                         
                         if (timeBlocks.length > 0) {
-                            timeDisplay = timeBlocks.map(block => `${block.start}-${block.end}`).join(', ');
+                            hasMultipleTimes = timeBlocks.length > 1;
+                            
+                            if (useCompactMode && timeBlocks.length > 2) {
+                                // Kompakte Darstellung: nur Anzahl anzeigen
+                                timeDisplay = `${timeBlocks.length}x Zeiten`;
+                            } else {
+                                // Normale Darstellung: alle Zeiten anzeigen
+                                timeDisplay = timeBlocks.map(block => `${block.start}-${block.end}`).join(', ');
+                            }
                             
                             result = calculateDayWorkTime(timeBlocks, monthData[day].weekday, monthData[day].isHoliday, monthData[day].hasPause);
                             // Bruttoarbeitszeit minus tatsächliche Pausenzeit = Nettoarbeitszeit
@@ -2797,30 +2881,32 @@
                     }
                 }
                 
+                const rowHeight = useCompactMode ? '14px' : '16px';
+                
                 tableHTML += `
-                    <tr style="height: 18px;">
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${dateStr}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt;">${monthData[day] && monthData[day].krankUrlaub ? '' : (timeDisplay.includes(',') ? 'mehrere' : (timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[0] : ''))}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt;">${monthData[day] && monthData[day].krankUrlaub ? '' : (timeDisplay.includes(',') ? 'Zeiten' : (timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[1] : ''))}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${totalHours}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${normal}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${surcharge50}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${taxed100}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${taxFree100}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt;">${dienstText}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt;">${einsatzpauschalenText}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 5pt;">${diaetenText}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 5pt;">${zeitausgleichText}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 5pt;">${montagezulageText}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 5pt; white-space: normal; line-height: 1.2;">${ruhezeitText}</td>
+                    <tr style="height: ${rowHeight};">
+                        <td style="border: 1px solid black; padding: 1px; text-align: center;">${dateStr}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center;">${monthData[day] && monthData[day].krankUrlaub ? '' : (timeDisplay.includes(',') && !useCompactMode ? 'mehrere' : (timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[0] : ''))}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center;">${monthData[day] && monthData[day].krankUrlaub ? '' : (timeDisplay.includes(',') && !useCompactMode ? 'Zeiten' : (timeDisplay.split(',')[0] ? timeDisplay.split(',')[0].split('-')[1] : ''))}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center;">${totalHours}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center;">${normal}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center;">${surcharge50}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center;">${taxed100}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center;">${taxFree100}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center;">${dienstText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center;">${einsatzpauschalenText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center;">${diaetenText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center;">${zeitausgleichText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center;">${montagezulageText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; white-space: normal; line-height: 1.2;">${ruhezeitText}</td>
                     </tr>
                 `;
                 
-                // Wenn mehrere Arbeitszeiten vorhanden sind, füge eine Detail-Zeile hinzu
-                if (timeDisplay.includes(',') && !monthData[day]?.krankUrlaub) {
+                // Detail-Zeile nur bei normaler Darstellung und mehreren Arbeitszeiten
+                if (!useCompactMode && hasMultipleTimes && timeDisplay.includes(',') && !monthData[day]?.krankUrlaub) {
                     tableHTML += `
-                        <tr style="height: 12px; background: #f8f8f8;">
-                            <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt; font-style: italic;" colspan="14">
+                        <tr style="height: 10px; background: #f8f8f8;">
+                            <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: ${parseFloat(fontSize) - 1}pt; font-style: italic;" colspan="14">
                                 Zeiten: ${timeDisplay}
                             </td>
                         </tr>
@@ -2832,60 +2918,60 @@
                         </tbody>
                         <tfoot>
                             <tr style="background: #f0f0f0; font-weight: bold; border-top: 2px solid black;">
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">SUMME</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center;">SUMME</td>
                                 <td style="border: 1px solid black; padding: 2px; text-align: center;">-</td>
                                 <td style="border: 1px solid black; padding: 2px; text-align: center;">-</td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalWorkTime)}</td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.normal)}</td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.surcharge_50)}</td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.taxed_100)}</td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.tax_free_100)}</td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 6pt;">-</td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${monthTotal.totalEinsatzpauschalen}</td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 6pt;">
+                                <td style="border: 1px solid black; padding: 2px; text-align: center;">${minutesToHours(monthTotal.totalWorkTime)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center;">${minutesToHours(monthTotal.normal)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center;">${minutesToHours(monthTotal.surcharge_50)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center;">${minutesToHours(monthTotal.taxed_100)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center;">${minutesToHours(monthTotal.tax_free_100)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center;">-</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center;">${monthTotal.totalEinsatzpauschalen}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center;">
                                     ${monthTotal.kleineDiaetCount > 0 ? `kl: ${monthTotal.kleineDiaetCount}` : ''}
                                     ${(monthTotal.kleineDiaetCount > 0 && monthTotal.mittlereDiaetCount > 0) ? '<br>' : ''}
                                     ${monthTotal.mittlereDiaetCount > 0 ? `mi: ${monthTotal.mittlereDiaetCount}` : ''}
                                     ${((monthTotal.kleineDiaetCount > 0 || monthTotal.mittlereDiaetCount > 0) && monthTotal.grosseDiaetCount > 0) ? '<br>' : ''}
                                     ${monthTotal.grosseDiaetCount > 0 ? `gr: ${monthTotal.grosseDiaetCount}` : ''}
                                 </td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 6pt;">${minutesToHours(monthTotal.totalZeitausgleich)}</td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 6pt;">${minutesToHours(monthTotal.totalMontagezulage)}</td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 5pt; white-space: normal;">${minutesToHours(monthTotal.totalRuhezeit)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center;">${minutesToHours(monthTotal.totalZeitausgleich)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center;">${minutesToHours(monthTotal.totalMontagezulage)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; white-space: normal;">${minutesToHours(monthTotal.totalRuhezeit)}</td>
                             </tr>
                         </tfoot>
                     </table>
                     
                     <!-- Dienst-Tabelle (unten) -->
-                    <div style="margin-top: 20px;">
-                        <h3 style="font-size: 12pt; margin-bottom: 10px; text-align: center;">DIENST-ÜBERSICHT</h3>
-                        <table style="width: 60%; margin: 0 auto; border-collapse: collapse; border: 1px solid black; font-size: 8pt;">
+                    <div style="margin-top: 15px;">
+                        <h3 style="font-size: ${headerSize}; margin-bottom: 8px; text-align: center;">DIENST-ÜBERSICHT</h3>
+                        <table style="width: 60%; margin: 0 auto; border-collapse: collapse; border: 1px solid black; font-size: ${fontSize};">
                             <thead>
                                 <tr style="background: #f0f0f0;">
-                                    <th style="border: 1px solid black; padding: 6px; text-align: left; font-weight: bold;">Dienst</th>
-                                    <th style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">Mo-Do</th>
-                                    <th style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">Fr</th>
-                                    <th style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">Sa</th>
-                                    <th style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">So</th>
-                                    <th style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">Gesamt</th>
+                                    <th style="border: 1px solid black; padding: 4px; text-align: left; font-weight: bold;">Dienst</th>
+                                    <th style="border: 1px solid black; padding: 4px; text-align: center; font-weight: bold;">Mo-Do</th>
+                                    <th style="border: 1px solid black; padding: 4px; text-align: center; font-weight: bold;">Fr</th>
+                                    <th style="border: 1px solid black; padding: 4px; text-align: center; font-weight: bold;">Sa</th>
+                                    <th style="border: 1px solid black; padding: 4px; text-align: center; font-weight: bold;">So</th>
+                                    <th style="border: 1px solid black; padding: 4px; text-align: center; font-weight: bold;">Gesamt</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td style="border: 1px solid black; padding: 6px; font-weight: bold;">Dienst 1:</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${dienst1MoDo}</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${monthTotal.dienst1Stats.friday}</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${monthTotal.dienst1Stats.saturday}</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${monthTotal.dienst1Stats.sunday}</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">${monthTotal.dienst1Stats.total}</td>
+                                    <td style="border: 1px solid black; padding: 4px; font-weight: bold;">Dienst 1:</td>
+                                    <td style="border: 1px solid black; padding: 4px; text-align: center;">${dienst1MoDo}</td>
+                                    <td style="border: 1px solid black; padding: 4px; text-align: center;">${monthTotal.dienst1Stats.friday}</td>
+                                    <td style="border: 1px solid black; padding: 4px; text-align: center;">${monthTotal.dienst1Stats.saturday}</td>
+                                    <td style="border: 1px solid black; padding: 4px; text-align: center;">${monthTotal.dienst1Stats.sunday}</td>
+                                    <td style="border: 1px solid black; padding: 4px; text-align: center; font-weight: bold;">${monthTotal.dienst1Stats.total}</td>
                                 </tr>
                                 <tr>
-                                    <td style="border: 1px solid black; padding: 6px; font-weight: bold;">Dienst 2:</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${dienst2MoDo}</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${monthTotal.dienst2Stats.friday}</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${monthTotal.dienst2Stats.saturday}</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${monthTotal.dienst2Stats.sunday}</td>
-                                    <td style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">${monthTotal.dienst2Stats.total}</td>
+                                    <td style="border: 1px solid black; padding: 4px; font-weight: bold;">Dienst 2:</td>
+                                    <td style="border: 1px solid black; padding: 4px; text-align: center;">${dienst2MoDo}</td>
+                                    <td style="border: 1px solid black; padding: 4px; text-align: center;">${monthTotal.dienst2Stats.friday}</td>
+                                    <td style="border: 1px solid black; padding: 4px; text-align: center;">${monthTotal.dienst2Stats.saturday}</td>
+                                    <td style="border: 1px solid black; padding: 4px; text-align: center;">${monthTotal.dienst2Stats.sunday}</td>
+                                    <td style="border: 1px solid black; padding: 4px; text-align: center; font-weight: bold;">${monthTotal.dienst2Stats.total}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -2894,6 +2980,10 @@
             `;
 
             printTableDiv.innerHTML = tableHTML;
+            
+            // Speichere Skalierung für den Druck
+            printTableDiv.dataset.scaleValue = scaleValue;
+            printTableDiv.dataset.additionalTimes = additionalTimesCount;
         }
 
         function printOfficialPDF() {
@@ -2910,15 +3000,18 @@
             const [year, month] = monthInput.split('-');
             const fileName = `${year}${month.padStart(2, '0')}_${employeeName.replace(/[^a-zA-Z0-9äöüß\s]/g, '').trim()}`;
             
+            // Hole gespeicherte Skalierung aus der PDF-Generierung
+            const scaleValue = printTableDiv.dataset.scaleValue || '0.95';
+            const additionalTimes = parseInt(printTableDiv.dataset.additionalTimes) || 0;
+            
             // Setze den Dokumenttitel für die PDF
             const originalTitle = document.title;
             document.title = fileName;
             
             printTableDiv.style.display = 'block';
             
-            // Temporäre Styles für den Druck (ursprüngliche Methode)
+            // Temporäre Styles für den Druck
             const originalStyles = document.head.innerHTML;
-            const scaleValue = printTableDiv.dataset.scaleValue || '0.95';
             
             document.head.innerHTML += `
                 <style media="print">
@@ -2938,6 +3031,7 @@
                         margin: 8mm; 
                         size: A4;
                     }
+                    
                     @media print {
                         html, body {
                             height: auto;
@@ -2949,6 +3043,19 @@
                             page-break-after: avoid !important;
                             page-break-before: avoid !important;
                             page-break-inside: avoid !important;
+                        }
+                        
+                        /* Tabellen-Styling */
+                        #printTable table {
+                            page-break-inside: avoid !important;
+                        }
+                        
+                        #printTable thead {
+                            display: table-header-group !important;
+                        }
+                        
+                        #printTable tfoot {
+                            display: table-footer-group !important;
                         }
                         
                         /* Dienst-Tabelle sichtbar machen */
@@ -2966,13 +3073,29 @@
                 </style>
             `;
             
-            // Zeige Info-Dialog mit Dateinamen (ursprüngliche Methode)
+            // Zeige Info-Dialog mit Dateinamen und Optimierungs-Info
             setTimeout(() => {
-                alert(`💾 PDF-Dateiname:\n\n"${fileName}.pdf"\n\nWählen Sie im Druckdialog "Als PDF speichern" und verwenden Sie diesen Namen.`);
+                let message = `💾 PDF-Dateiname:\n\n"${fileName}.pdf"\n\n`;
+                
+                if (additionalTimes > 0) {
+                    if (additionalTimes <= 3) {
+                        message += `✅ PDF automatisch optimiert für ${additionalTimes} Tage mit mehreren Arbeitszeiten (Normal-Darstellung)\n\n`;
+                    } else if (additionalTimes <= 8) {
+                        message += `📊 PDF automatisch optimiert für ${additionalTimes} Tage mit mehreren Arbeitszeiten (Leicht kompakt)\n\n`;
+                    } else if (additionalTimes <= 15) {
+                        message += `📈 PDF automatisch optimiert für ${additionalTimes} Tage mit mehreren Arbeitszeiten (Kompakt)\n\n`;
+                    } else {
+                        message += `🔥 PDF automatisch optimiert für ${additionalTimes} Tage mit mehreren Arbeitszeiten (Sehr kompakt)\n\n`;
+                    }
+                }
+                
+                message += `Wählen Sie im Druckdialog "Als PDF speichern".`;
+                
+                alert(message);
                 window.print();
             }, 100);
             
-            // Styles zurücksetzen (ursprüngliche Methode)
+            // Styles zurücksetzen
             setTimeout(() => {
                 printTableDiv.style.display = 'none';
                 document.head.innerHTML = originalStyles;
