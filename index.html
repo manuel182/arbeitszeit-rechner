@@ -534,7 +534,11 @@
                 padding: 12px;
                 margin: 0;
                 max-width: 100%;
-                overflow: hidden;
+                overflow: visible !important;
+                border: 2px solid #e9ecef !important;
+                border-radius: 12px !important;
+                box-sizing: border-box;
+                width: 100%;
             }
 
             .mode-selector {
@@ -614,7 +618,14 @@
             /* MOBILE: Prevent horizontal overflow */
             .container {
                 max-width: 100vw;
-                overflow-x: hidden;
+                overflow-x: visible;
+                margin: 0;
+            }
+
+            .month-calendar {
+                padding: 0 5px;
+                box-sizing: border-box;
+                width: 100%;
             }
 
             /* MOBILE: Day-header responsive */
