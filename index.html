@@ -514,7 +514,7 @@
             }
             
             .content {
-                padding: 15px;
+                padding: 10px;
             }
             
             .form-group {
@@ -527,12 +527,14 @@
 
             .month-calendar {
                 grid-template-columns: 1fr;
-                gap: 15px;
+                gap: 10px;
             }
 
             .day-card {
-                padding: 15px;
+                padding: 12px;
                 margin: 0;
+                max-width: 100%;
+                overflow: hidden;
             }
 
             .mode-selector {
@@ -540,62 +542,91 @@
                 align-items: center;
             }
 
-            .day-inputs {
-                grid-template-columns: 1fr;
-            }
-
             .input-section {
-                padding: 20px;
+                padding: 15px;
             }
 
             .month-header {
-                padding: 20px;
+                padding: 15px;
             }
 
             .result-grid {
-                grid-template-columns: 1fr 1fr;
+                grid-template-columns: 1fr;
                 gap: 10px;
             }
 
-            .result-item {
-                padding: 12px;
-            }
-
-            /* Mobile-optimierte Day-Card Inhalte */
-            .day-card .form-field > div {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-
+            /* MOBILE: Alle Grid-Layouts in Day-Cards auf 1 Spalte */
             .day-card .form-field > div[style*="grid-template-columns"] {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 8px !important;
             }
 
+            /* MOBILE: Ruhezeit und Arbeitszeit-Eingaben stapeln */
             .ruhezeit-inputs,
             .day-inputs-quick,
             .day-inputs-additional {
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 5px !important;
             }
 
-            /* Kleinere Schriftgrößen für mobile */
-            .day-card label {
-                font-size: 0.75rem !important;
+            .ruhezeit-labels,
+            .input-labels {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 3px !important;
             }
 
+            /* MOBILE: Eingabefelder volle Breite */
             .time-input-quick {
-                width: 100%;
-                min-width: 50px;
+                width: 100% !important;
+                max-width: 100% !important;
+                min-width: 0 !important;
+                box-sizing: border-box;
             }
 
-            /* Button-Verbesserungen für mobile */
+            /* MOBILE: Labels und Text kleiner */
+            .day-card label {
+                font-size: 0.7rem !important;
+            }
+
+            .day-summary {
+                font-size: 0.7rem !important;
+                padding: 8px !important;
+            }
+
+            /* MOBILE: Buttons in einer Reihe, kleiner */
             .day-card button {
-                padding: 4px 8px;
-                font-size: 0.7rem;
-                margin: 1px;
+                padding: 3px 6px !important;
+                font-size: 0.6rem !important;
+                margin: 1px !important;
+                min-width: 30px !important;
+            }
+
+            /* MOBILE: Select-Felder anpassen */
+            .day-card select {
+                width: 100% !important;
+                padding: 3px !important;
+                font-size: 0.7rem !important;
+            }
+
+            /* MOBILE: Prevent horizontal overflow */
+            .container {
+                max-width: 100vw;
+                overflow-x: hidden;
+            }
+
+            /* MOBILE: Day-header responsive */
+            .day-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .weekday {
+                margin-left: 0 !important;
+                text-align: left !important;
             }
         }
 
