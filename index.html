@@ -559,11 +559,13 @@
                 gap: 10px;
             }
 
-            /* MOBILE: Alle Grid-Layouts in Day-Cards auf 1 Spalte */
+            /* MOBILE: Alle Grid-Layouts in Day-Cards auf normale flex/block Layouts */
             .day-card .form-field > div[style*="grid-template-columns"] {
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 8px !important;
+                display: block !important;
+            }
+
+            .day-card .form-field > div {
+                display: block !important;
             }
 
             /* MOBILE: Ruhezeit und Arbeitszeit-Eingaben nebeneinander, aber optimal dimensioniert */
@@ -1740,178 +1742,129 @@
                     </div>
                     ` : ''}
                     
-                    <!-- 1. Arbeitszeit -->
-                    <div id="timeInputs_${day}">
-                        <label style="font-size: 0.8rem; margin-bottom: 5px; display: block; font-weight: bold;">
-                            Arbeitszeit:
+                    <!-- 1. ARBEITSZEIT -->
+                    <div style="margin-bottom: 10px;">
+                        <label style="font-size: 0.8rem; margin-bottom: 5px; display: block; font-weight: bold;">Arbeitszeit:</label>
+                        <div id="timeInputs_${day}">
+                            <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 5px;">
+                                <div style="font-size: 0.7rem;">Beginn</div>
+                                <div style="font-size: 0.7rem;">Ende</div>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text" class="time-input-quick" id="start1_${day}" data-day="${day}" placeholder="${defaultStartTime}" onkeydown="handleTimeKeyDown(event)" onblur="handleTimeBlur(event)" tabindex="${day * 10 + 1}">
+                                <input type="text" class="time-input-quick" id="end1_${day}" data-day="${day}" placeholder="${defaultEndTime}" onkeydown="handleTimeKeyDown(event)" onblur="handleTimeBlur(event)" tabindex="${day * 10 + 2}">
+                            </div>
+                        </div>
+                        <div style="text-align: center; margin: 8px 0;">
+                            <button type="button" onclick="addDayTimeBlock(${day})" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; margin: 2px;">+</button>
+                            <button type="button" onclick="removeDayTimeBlock(${day})" style="background: #6c757d; color: white; border: none; padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; margin: 2px;">-</button>
+                            <button type="button" onclick="copyToWeek(${day})" style="background: #17a2b8; color: white; border: none; padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; margin: 2px;">📋</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 2. DIÄTEN -->
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.8rem; display: block;">Diäten:</label>
+                        <select id="diaeten_${day}" onchange="updateDaySummary(${day})" style="width: 100%; padding: 4px; font-size: 0.8rem; margin-top: 3px;">
+                            <option value="">--</option>
+                            <option value="kleine">kleine Diät</option>
+                            <option value="mittlere">mittlere Diät</option>
+                            <option value="grosse">große Diät</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 3. PAUSE -->
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.8rem;">
+                            <input type="checkbox" id="pause_${day}" onchange="updateDaySummary(${day})" ${defaultPause ? 'checked' : ''}> Pause (0:45h)
                         </label>
-                        <div class="input-labels">
-                            <div>Beginn</div>
-                            <div>Ende</div>
-                        </div>
-                        <div class="day-inputs-quick">
-                            <input type="text" 
-                                   class="time-input-quick" 
-                                   id="start1_${day}" 
-                                   data-day="${day}"
-                                   placeholder="${defaultStartTime}"
-                                   onkeydown="handleTimeKeyDown(event)"
-                                   onblur="handleTimeBlur(event)"
-                                   tabindex="${day * 10 + 1}">
-                            <input type="text" 
-                                   class="time-input-quick" 
-                                   id="end1_${day}" 
-                                   data-day="${day}"
-                                   placeholder="${defaultEndTime}"
-                                   onkeydown="handleTimeKeyDown(event)"
-                                   onblur="handleTimeBlur(event)"
-                                   tabindex="${day * 10 + 2}">
+                    </div>
+                    
+                    <!-- 4. DIENST 1 -->
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.8rem;">
+                            <input type="checkbox" id="dienst1_${day}" onchange="updateDaySummary(${day})"> Dienst 1
+                        </label>
+                    </div>
+                    
+                    <!-- 5. DIENST 2 -->
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.8rem;">
+                            <input type="checkbox" id="dienst2_${day}" onchange="updateDaySummary(${day})"> Dienst 2
+                        </label>
+                    </div>
+                    
+                    <!-- 6. FEIERTAG -->
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.8rem;">
+                            <input type="checkbox" id="holiday_${day}" onchange="updateDaySummary(${day})" ${isHolidayDay ? 'checked' : ''}> Feiertag
+                        </label>
+                    </div>
+                    
+                    <!-- 7. EINSATZPAUSCHALEN -->
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.8rem; display: block;">Einsatzpauschalen (1-9):</label>
+                        <input type="number" id="einsatzpauschalen_${day}" min="1" max="9" style="width: 70px; padding: 4px; font-size: 0.8rem; margin-top: 3px;" onchange="updateDaySummary(${day})" placeholder="0">
+                    </div>
+                    
+                    <!-- 8. KRANK/URLAUB -->
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.8rem; display: block;">Krank/Urlaub:</label>
+                        <select id="krankUrlaub_${day}" onchange="updateDaySummary(${day})" style="width: 100%; padding: 4px; font-size: 0.8rem; margin-top: 3px;">
+                            <option value="">--</option>
+                            <option value="krank">Krank</option>
+                            <option value="urlaub">Urlaub</option>
+                        </select>
+                    </div>
+                    
+                    <!-- 9. ZEITAUSGLEICH -->
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.8rem; display: block;">Zeitausgleich:</label>
+                        <div style="display: flex; gap: 5px; align-items: center; margin-top: 3px;">
+                            <select id="zeitausgleichH_${day}" onchange="updateDaySummary(${day})" style="width: 70px; padding: 4px; font-size: 0.8rem;">
+                                <option value="">--</option>
+                                ${Array.from({length: 24}, (_, i) => `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`).join('')}
+                            </select>
+                            <span style="font-size: 0.8rem;">:</span>
+                            <select id="zeitausgleichM_${day}" onchange="updateDaySummary(${day})" style="width: 70px; padding: 4px; font-size: 0.8rem;">
+                                <option value="">--</option>
+                                <option value="00">00</option>
+                                <option value="15">15</option>
+                                <option value="30">30</option>
+                                <option value="45">45</option>
+                            </select>
                         </div>
                     </div>
                     
-                    <div style="text-align: center; margin: 8px 0;">
-                        <button type="button" onclick="addDayTimeBlock(${day})" style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; margin: 2px;">+</button>
-                        <button type="button" onclick="removeDayTimeBlock(${day})" style="background: #6c757d; color: white; border: none; padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; margin: 2px;">-</button>
-                        <button type="button" onclick="copyToWeek(${day})" style="background: #17a2b8; color: white; border: none; padding: 4px 8px; border-radius: 5px; font-size: 0.7rem; margin: 2px;">📋 Woche</button>
+                    <!-- 10. ZEIT IN DER FIRMA -->
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.8rem; display: block;">Zeit in der Firma:</label>
+                        <div style="display: flex; gap: 5px; align-items: center; margin-top: 3px;">
+                            <select id="zeitFirmaH_${day}" onchange="updateDaySummary(${day})" style="width: 70px; padding: 4px; font-size: 0.8rem;">
+                                <option value="">--</option>
+                                ${Array.from({length: 24}, (_, i) => `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`).join('')}
+                            </select>
+                            <span style="font-size: 0.8rem;">:</span>
+                            <select id="zeitFirmaM_${day}" onchange="updateDaySummary(${day})" style="width: 70px; padding: 4px; font-size: 0.8rem;">
+                                <option value="">--</option>
+                                <option value="00">00</option>
+                                <option value="15">15</option>
+                                <option value="30">30</option>
+                                <option value="45">45</option>
+                            </select>
+                        </div>
                     </div>
                     
-                    <div class="form-field" style="margin-bottom: 10px;">
-                        <!-- 2. Diäten -->
-                        <div style="margin-bottom: 8px;">
-                            <label style="font-size: 0.8rem;">
-                                Diäten:
-                                <select id="diaeten_${day}" onchange="updateDaySummary(${day})" style="width: 100%; padding: 4px; font-size: 0.8rem; margin-top: 3px;">
-                                    <option value="">--</option>
-                                    <option value="kleine">kleine Diät</option>
-                                    <option value="mittlere">mittlere Diät</option>
-                                    <option value="grosse">große Diät</option>
-                                </select>
-                            </label>
+                    <!-- 11. RUHEZEIT -->
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.8rem; display: block;">Ruhezeit:</label>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-top: 3px;">
+                            <div style="font-size: 0.7rem;">Von</div>
+                            <div style="font-size: 0.7rem;">Bis</div>
                         </div>
-                        
-                        <!-- 3. Pause -->
-                        <div style="margin-bottom: 8px;">
-                            <label style="font-size: 0.8rem;">
-                                <input type="checkbox" id="pause_${day}" onchange="updateDaySummary(${day})" ${defaultPause ? 'checked' : ''}> Pause (0:45h)
-                            </label>
-                        </div>
-                        
-                        <!-- 4. Dienst 1 -->
-                        <div style="margin-bottom: 8px;">
-                            <label style="font-size: 0.8rem;">
-                                <input type="checkbox" id="dienst1_${day}" onchange="updateDaySummary(${day})"> Dienst 1
-                            </label>
-                        </div>
-                        
-                        <!-- 5. Dienst 2 -->
-                        <div style="margin-bottom: 8px;">
-                            <label style="font-size: 0.8rem;">
-                                <input type="checkbox" id="dienst2_${day}" onchange="updateDaySummary(${day})"> Dienst 2
-                            </label>
-                        </div>
-                        
-                        <!-- 6. Feiertag -->
-                        <div style="margin-bottom: 8px;">
-                            <label style="font-size: 0.8rem;">
-                                <input type="checkbox" id="holiday_${day}" onchange="updateDaySummary(${day})" ${isHolidayDay ? 'checked' : ''}> Feiertag
-                            </label>
-                        </div>
-                        
-                        <!-- 7. Einsatzpauschalen -->
-                        <div style="margin-bottom: 8px;">
-                            <label style="font-size: 0.8rem;">
-                                Einsatzpauschalen (1-9): 
-                                <input type="number" 
-                                       id="einsatzpauschalen_${day}" 
-                                       min="1" 
-                                       max="9" 
-                                       style="width: 60px; padding: 4px; font-size: 0.8rem; margin-top: 3px;" 
-                                       onchange="updateDaySummary(${day})"
-                                       placeholder="0">
-                            </label>
-                        </div>
-                        
-                        <!-- 8. Krank/Urlaub -->
-                        <div style="margin-bottom: 8px;">
-                            <label style="font-size: 0.8rem;">
-                                Krank/Urlaub:
-                                <select id="krankUrlaub_${day}" onchange="updateDaySummary(${day})" style="width: 100%; padding: 4px; font-size: 0.8rem; margin-top: 3px;">
-                                    <option value="">--</option>
-                                    <option value="krank">Krank</option>
-                                    <option value="urlaub">Urlaub</option>
-                                </select>
-                            </label>
-                        </div>
-                        
-                        <!-- 9. Zeitausgleich -->
-                        <div style="margin-bottom: 8px;">
-                            <label style="font-size: 0.8rem;">
-                                Zeitausgleich:
-                                <div style="display: flex; gap: 5px; align-items: center; margin-top: 3px;">
-                                    <select id="zeitausgleichH_${day}" onchange="updateDaySummary(${day})" style="width: 60px; padding: 4px; font-size: 0.8rem;">
-                                        <option value="">--</option>
-                                        ${Array.from({length: 24}, (_, i) => `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`).join('')}
-                                    </select>
-                                    <span>:</span>
-                                    <select id="zeitausgleichM_${day}" onchange="updateDaySummary(${day})" style="width: 60px; padding: 4px; font-size: 0.8rem;">
-                                        <option value="">--</option>
-                                        <option value="00">00</option>
-                                        <option value="15">15</option>
-                                        <option value="30">30</option>
-                                        <option value="45">45</option>
-                                    </select>
-                                </div>
-                            </label>
-                        </div>
-                        
-                        <!-- 10. Zeit in der Firma -->
-                        <div style="margin-bottom: 8px;">
-                            <label style="font-size: 0.8rem;">
-                                Zeit in der Firma:
-                                <div style="display: flex; gap: 5px; align-items: center; margin-top: 3px;">
-                                    <select id="zeitFirmaH_${day}" onchange="updateDaySummary(${day})" style="width: 60px; padding: 4px; font-size: 0.8rem;">
-                                        <option value="">--</option>
-                                        ${Array.from({length: 24}, (_, i) => `<option value="${i.toString().padStart(2, '0')}">${i.toString().padStart(2, '0')}</option>`).join('')}
-                                    </select>
-                                    <span>:</span>
-                                    <select id="zeitFirmaM_${day}" onchange="updateDaySummary(${day})" style="width: 60px; padding: 4px; font-size: 0.8rem;">
-                                        <option value="">--</option>
-                                        <option value="00">00</option>
-                                        <option value="15">15</option>
-                                        <option value="30">30</option>
-                                        <option value="45">45</option>
-                                    </select>
-                                </div>
-                            </label>
-                        </div>
-                        
-                        <!-- 11. Ruhezeit -->
-                        <div style="margin-bottom: 8px;">
-                            <label style="font-size: 0.8rem;">
-                                Ruhezeit:
-                                <div class="ruhezeit-labels">
-                                    <div>Von</div>
-                                    <div>Bis</div>
-                                </div>
-                                <div class="ruhezeit-inputs">
-                                    <input type="text" 
-                                           class="time-input-quick" 
-                                           id="ruhezeitVon_${day}" 
-                                           data-day="${day}"
-                                           placeholder=""
-                                           onkeydown="handleTimeKeyDown(event)"
-                                           onblur="handleTimeBlur(event)"
-                                           style="font-size: 0.7rem;">
-                                    <input type="text" 
-                                           class="time-input-quick" 
-                                           id="ruhezeitBis_${day}" 
-                                           data-day="${day}"
-                                           placeholder=""
-                                           onkeydown="handleTimeKeyDown(event)"
-                                           onblur="handleTimeBlur(event)"
-                                           style="font-size: 0.7rem;">
-                                </div>
-                            </label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" class="time-input-quick" id="ruhezeitVon_${day}" data-day="${day}" placeholder="" onkeydown="handleTimeKeyDown(event)" onblur="handleTimeBlur(event)" style="font-size: 0.7rem;">
+                            <input type="text" class="time-input-quick" id="ruhezeitBis_${day}" data-day="${day}" placeholder="" onkeydown="handleTimeKeyDown(event)" onblur="handleTimeBlur(event)" style="font-size: 0.7rem;">
                         </div>
                     </div>
                     
