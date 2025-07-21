@@ -64,8 +64,10 @@
         .mode-selector {
             display: flex;
             justify-content: center;
+            align-items: center;
             gap: 15px;
             margin-bottom: 30px;
+            flex-wrap: wrap;
         }
 
         .mode-btn {
@@ -87,6 +89,191 @@
         .mode-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-btn {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+            border: 2px solid #17a2b8;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .info-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(23, 162, 184, 0.4);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 2% auto;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            border-radius: 15px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .close-btn {
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+            transition: all 0.3s ease;
+        }
+
+        .close-btn:hover {
+            transform: scale(1.1);
+            opacity: 0.8;
+        }
+
+        .modal-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .rules-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .rules-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .rules-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .rules-section h4 {
+            color: #495057;
+            margin: 15px 0 10px 0;
+            font-size: 1rem;
+        }
+
+        .rules-section p {
+            color: #495057;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .sub-info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 10px 15px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+
+        .examples {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .example-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .example-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .example-item.valid {
+            background: rgba(40, 167, 69, 0.1);
+            border-left: 3px solid #28a745;
+        }
+
+        .example-item.invalid {
+            background: rgba(220, 53, 69, 0.1);
+            border-left: 3px solid #dc3545;
+        }
+
+        .example-item .icon {
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+
+        .example-item .text {
+            flex: 1;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .overtime-table {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #dee2e6;
+            margin-top: 15px;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 15px;
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        .table-row.header {
+            background: #f8f9fa;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .table-row:not(.header):hover {
+            background: #f8f9fa;
         }
 
         .section {
@@ -176,6 +363,20 @@
             border-color: #667eea;
             background-color: #f0f8ff;
             outline: none;
+        }
+
+        /* Größere Eingabefelder für Einzelberechnung */
+        #single-mode .time-input-quick {
+            width: 120px;
+            padding: 12px;
+            font-size: 1rem;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+        }
+
+        #single-mode .time-input-quick:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
         .day-inputs-quick {
@@ -546,6 +747,53 @@
                 align-items: center;
             }
 
+            .info-btn {
+                padding: 12px 18px;
+                font-size: 0.8rem;
+            }
+
+            /* Modal responsive */
+            .modal-content {
+                width: 95%;
+                margin: 5% auto;
+                max-height: 85vh;
+            }
+
+            .modal-header {
+                padding: 15px 20px;
+            }
+
+            .modal-header h2 {
+                font-size: 1.2rem;
+            }
+
+            .modal-body {
+                padding: 20px;
+            }
+
+            .table-row {
+                grid-template-columns: 1fr;
+                gap: 5px;
+                text-align: center;
+            }
+
+            .table-row.header {
+                display: none;
+            }
+
+            .table-row:not(.header) {
+                border: 1px solid #dee2e6;
+                border-radius: 8px;
+                margin-bottom: 10px;
+                padding: 15px;
+            }
+
+            .example-item {
+                flex-direction: column;
+                gap: 5px;
+                text-align: left;
+            }
+
             .input-section {
                 padding: 15px;
             }
@@ -593,6 +841,15 @@
                 min-width: 70px !important;
                 box-sizing: border-box;
                 text-align: center;
+            }
+
+            /* MOBILE: Einzelberechnung - größere Felder bleiben größer aber angepasst */
+            #single-mode .time-input-quick {
+                width: 100px !important;
+                max-width: 100px !important;
+                min-width: 100px !important;
+                padding: 10px !important;
+                font-size: 0.9rem !important;
             }
 
             /* MOBILE: Labels und Text kleiner */
@@ -686,27 +943,112 @@
                 <div class="mode-btn" onclick="switchMode('monthly')">
                     📅 Monatsliste
                 </div>
+                <button onclick="showRulesModal()" class="info-btn" title="Arbeitszeit-Regelungen anzeigen">
+                    ℹ️ Info
+                </button>
+            </div>
+
+            <!-- Arbeitszeit-Regelungen Modal -->
+            <div id="rulesModal" class="modal" onclick="hideRulesModal()">
+                <div class="modal-content" onclick="event.stopPropagation()">
+                    <div class="modal-header">
+                        <h2>📋 Arbeitszeit-Regelungen</h2>
+                        <span class="close-btn" onclick="hideRulesModal()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="rules-section">
+                            <h3>🌙 Nachtzeiten (Mo-Sa)</h3>
+                            <p>22:00-06:00 Uhr = <strong>100% steuerfrei</strong></p>
+                        </div>
+                        
+                        <div class="rules-section">
+                            <h3>🎉 Wochenende</h3>
+                            <p>Sa 22:00 bis Mo 06:00 = <strong>100% steuerfrei</strong></p>
+                        </div>
+                        
+                        <div class="rules-section">
+                            <h3>🎉 Sonntag & Feiertage</h3>
+                            <p>00:00-24:00 Uhr = <strong>100% steuerfrei</strong></p>
+                            <p class="sub-info">🎯 <strong>Österreichische Feiertage werden automatisch erkannt!</strong><br>
+                            Neujahr, Heilige Drei Könige, Ostermontag, Tag der Arbeit, Christi Himmelfahrt, Pfingstmontag, Fronleichnam, Mariä Himmelfahrt, Nationalfeiertag, Allerheiligen, Mariä Empfängnis, Weihnachten, Stefanitag</p>
+                        </div>
+                        
+                        <div class="rules-section">
+                            <h3>🕐 3-Stunden-Regel (nur Werktage Mo-Sa)</h3>
+                            <p>Wenn eine Arbeitszeit von <strong>19:00 bis mindestens 22:00 Uhr</strong> geht (mindestens 3 Stunden), dann ist der Zeitraum <strong>ab 19:00 Uhr bis zum Ende 100% steuerfrei</strong>. Der Teil vor 19:00 wird normal berechnet.</p>
+                            
+                            <h4>Beispiele:</h4>
+                            <div class="examples">
+                                <div class="example-item valid">
+                                    <span class="icon">✅</span>
+                                    <span class="text"><strong>Teilweise steuerfrei:</strong> 07:30-22:45 → vor 19:00 normal, ab 19:00 steuerfrei</span>
+                                </div>
+                                <div class="example-item valid">
+                                    <span class="icon">✅</span>
+                                    <span class="text"><strong>Komplett steuerfrei:</strong> 19:00-22:00 (nur Abendschicht)</span>
+                                </div>
+                                <div class="example-item valid">
+                                    <span class="icon">✅</span>
+                                    <span class="text"><strong>Komplett steuerfrei:</strong> 20:00-23:30 (nur Abendschicht)</span>
+                                </div>
+                                <div class="example-item valid">
+                                    <span class="icon">✅</span>
+                                    <span class="text"><strong>Teilweise steuerfrei:</strong> 16:00-23:00 → 16:00-19:00 normal, 19:00-23:00 steuerfrei</span>
+                                </div>
+                                <div class="example-item invalid">
+                                    <span class="icon">❌</span>
+                                    <span class="text"><strong>Normal berechnet:</strong> 19:00-21:30 (nur 2,5 Stunden, nicht bis 22:00)</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="rules-section">
+                            <h3>📋 Pausenregelung</h3>
+                            <p>Kreuzen Sie <strong>"Pause"</strong> pro Tag an, wenn eine <strong>45-Minuten-Pause</strong> von der Arbeitszeit abgezogen werden soll.</p>
+                            <p class="sub-info">Bei Mo-Do wird die Mittagspause (12:00-12:45) automatisch berücksichtigt wenn "Pause" angekreuzt ist.</p>
+                        </div>
+                        
+                        <div class="rules-section">
+                            <h3>💼 Zuschlagsübersicht</h3>
+                            <div class="overtime-table">
+                                <div class="table-row header">
+                                    <div>Wochentag</div>
+                                    <div>Zeiten</div>
+                                    <div>Zuschlag</div>
+                                </div>
+                                <div class="table-row">
+                                    <div>Mo-Do</div>
+                                    <div>6:00-7:30, 16:45-18:45</div>
+                                    <div>50%</div>
+                                </div>
+                                <div class="table-row">
+                                    <div>Mo-Do</div>
+                                    <div>18:45-22:00</div>
+                                    <div>100% versteuert</div>
+                                </div>
+                                <div class="table-row">
+                                    <div>Freitag</div>
+                                    <div>12:00-18:45</div>
+                                    <div>50%</div>
+                                </div>
+                                <div class="table-row">
+                                    <div>Samstag</div>
+                                    <div>6:00-22:00</div>
+                                    <div>100% versteuert</div>
+                                </div>
+                                <div class="table-row">
+                                    <div>Alle Tage</div>
+                                    <div>22:00-6:00</div>
+                                    <div>100% steuerfrei</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Einzelberechnung -->
             <div id="single-mode" class="section active">
-                <div class="rules-info">
-                    <h4>📋 Arbeitszeit-Regelungen:</h4>
-                    <p><strong>🌙 Nachtzeiten (Mo-Sa):</strong> 22:00-06:00 Uhr = 100% steuerfrei</p>
-                    <p><strong>🎉 Wochenende:</strong> Sa 22:00 bis Mo 06:00 = 100% steuerfrei</p>
-                    <p><strong>🎉 Sonntag & Feiertag:</strong> 00:00-24:00 Uhr = 100% steuerfrei</p>
-                    <p><strong>🎯 Österreichische Feiertage werden automatisch erkannt!</strong> (Neujahr, Heilige Drei Könige, Ostermontag, Tag der Arbeit, Christi Himmelfahrt, Pfingstmontag, Fronleichnam, Mariä Himmelfahrt, Nationalfeiertag, Allerheiligen, Mariä Empfängnis, Weihnachten, Stefanitag)</p>
-                    <p><strong>🕐 3-Stunden-Regel (nur Werktage Mo-Sa):</strong><br>
-                    Wenn eine Arbeitszeit von 19:00 bis mindestens 22:00 Uhr geht (mindestens 3 Stunden), dann ist der Zeitraum ab 19:00 Uhr bis zum Ende 100% steuerfrei. Der Teil vor 19:00 wird normal berechnet.</p>
-                    <ul style="margin: 10px 0; padding-left: 20px;">
-                        <li><strong>✅ Teilweise steuerfrei:</strong> 07:30-22:45 → vor 19:00 normal, ab 19:00 steuerfrei</li>
-                        <li><strong>✅ Komplett steuerfrei:</strong> 19:00-22:00 (nur Abendschicht)</li>
-                        <li><strong>✅ Komplett steuerfrei:</strong> 20:00-23:30 (nur Abendschicht)</li>
-                        <li><strong>✅ Teilweise steuerfrei:</strong> 16:00-23:00 → 16:00-19:00 normal, 19:00-23:00 steuerfrei</li>
-                        <li><strong>❌ Normal berechnet:</strong> 19:00-21:30 (nur 2,5 Stunden, nicht bis 22:00)</li>
-                    </ul>
-                    <p><strong>📋 Pausenregelung:</strong> Kreuzen Sie "Pause" pro Tag an, wenn eine 45-Minuten-Pause von der Arbeitszeit abgezogen werden soll.</p>
-                </div>
 
                 <div class="input-section">
                     <h3>📅 Arbeitszeit eingeben</h3>
@@ -745,36 +1087,24 @@
                             <h4>🕐 Hauptarbeitszeit</h4>
                             <div class="form-group">
                                 <div class="form-field">
-                                    <label>Beginn</label>
-                                    <div class="time-input-group">
-                                        <select id="startHour1">
-                                            <option value="">--</option>
-                                        </select>
-                                        <span class="time-separator">:</span>
-                                        <select id="startMin1">
-                                            <option value="">--</option>
-                                            <option value="00">00</option>
-                                            <option value="15">15</option>
-                                            <option value="30">30</option>
-                                            <option value="45">45</option>
-                                        </select>
-                                    </div>
+                                    <label>Beginn (z.B. 730 für 7:30)</label>
+                                    <input type="text" 
+                                           class="time-input-quick" 
+                                           id="startTime1" 
+                                           placeholder="7:30"
+                                           onkeydown="handleSingleTimeKeyDown(event)"
+                                           onblur="handleSingleTimeBlur(event)"
+                                           style="width: 120px; padding: 12px; font-size: 1rem;">
                                 </div>
                                 <div class="form-field">
-                                    <label>Ende</label>
-                                    <div class="time-input-group">
-                                        <select id="endHour1">
-                                            <option value="">--</option>
-                                        </select>
-                                        <span class="time-separator">:</span>
-                                        <select id="endMin1">
-                                            <option value="">--</option>
-                                            <option value="00">00</option>
-                                            <option value="15">15</option>
-                                            <option value="30">30</option>
-                                            <option value="45">45</option>
-                                        </select>
-                                    </div>
+                                    <label>Ende (z.B. 1645 für 16:45)</label>
+                                    <input type="text" 
+                                           class="time-input-quick" 
+                                           id="endTime1" 
+                                           placeholder="16:45"
+                                           onkeydown="handleSingleTimeKeyDown(event)"
+                                           onblur="handleSingleTimeBlur(event)"
+                                           style="width: 120px; padding: 12px; font-size: 1rem;">
                                 </div>
                             </div>
                         </div>
@@ -902,8 +1232,8 @@
                 
                 if (event.key === 'Enter') {
                     event.preventDefault();
-                    // Finde nächstes Eingabefeld
-                    const inputs = Array.from(document.querySelectorAll('.time-input-quick'));
+                    // Finde nächstes Eingabefeld in der Monatsliste
+                    const inputs = Array.from(document.querySelectorAll('#monthly-mode .time-input-quick'));
                     const currentIndex = inputs.indexOf(event.target);
                     const nextInput = inputs[currentIndex + 1];
                     if (nextInput) {
@@ -912,6 +1242,34 @@
                     }
                 }
             }
+        }
+
+        function handleSingleTimeKeyDown(event) {
+            // Enter oder Tab: zum nächsten Feld
+            if (event.key === 'Enter' || event.key === 'Tab') {
+                formatTimeInput(event.target);
+                
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    // Finde nächstes Eingabefeld in der Einzelberechnung
+                    const inputs = Array.from(document.querySelectorAll('#single-mode .time-input-quick'));
+                    const currentIndex = inputs.indexOf(event.target);
+                    const nextInput = inputs[currentIndex + 1];
+                    if (nextInput) {
+                        nextInput.focus();
+                        nextInput.select();
+                    }
+                }
+            }
+        }
+
+        function handleSingleTimeBlur(event) {
+            formatTimeInput(event.target);
+        }
+
+        function getTimeFromSingleInput(inputId) {
+            const input = document.getElementById(inputId);
+            return input ? input.value : '';
         }
 
         function handleTimeBlur(event) {
@@ -1121,6 +1479,8 @@
             
             // Finde alle Tage der gleichen Woche
             const currentDate = monthData[day].date;
+            const currentMonth = currentDate.getMonth();
+            const currentYear = currentDate.getFullYear();
             const monday = new Date(currentDate);
             monday.setDate(currentDate.getDate() - currentDate.getDay() + 1);
             
@@ -1128,8 +1488,12 @@
                 const targetDate = new Date(monday);
                 targetDate.setDate(monday.getDate() + i);
                 const targetDay = targetDate.getDate();
+                const targetMonth = targetDate.getMonth();
+                const targetYear = targetDate.getFullYear();
                 
-                if (monthData[targetDay] && targetDay !== day) {
+                // Prüfe, ob das Zieldatum im gleichen Monat/Jahr liegt UND im monthData existiert
+                if (monthData[targetDay] && targetDay !== day && 
+                    targetMonth === currentMonth && targetYear === currentYear) {
                     // Grunddaten setzen
                     const targetInput1 = document.getElementById(`start1_${targetDay}`);
                     const targetInput2 = document.getElementById(`end1_${targetDay}`);
@@ -1535,6 +1899,23 @@
             document.getElementById(mode + '-mode').classList.add('active');
         }
 
+        function showRulesModal() {
+            document.getElementById('rulesModal').style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Verhindere Scrollen im Hintergrund
+        }
+
+        function hideRulesModal() {
+            document.getElementById('rulesModal').style.display = 'none';
+            document.body.style.overflow = 'auto'; // Erlaube wieder Scrollen
+        }
+
+        // ESC-Taste zum Schließen des Modals
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                hideRulesModal();
+            }
+        });
+
         function calculateWorkTime() {
             const day = document.getElementById('workday').value;
             let isHoliday = document.getElementById('isHoliday').value === 'true';
@@ -1543,8 +1924,8 @@
             // Sammle alle Arbeitszeit-Blöcke
             const timeBlocks = [];
             for (let i = 1; i <= singleModeTimeBlocks; i++) {
-                const startTime = getTimeFromSelects(`startHour${i}`, `startMin${i}`);
-                const endTime = getTimeFromSelects(`endHour${i}`, `endMin${i}`);
+                const startTime = getTimeFromSingleInput(`startTime${i}`);
+                const endTime = getTimeFromSingleInput(`endTime${i}`);
                 
                 if (startTime && endTime) {
                     timeBlocks.push({
@@ -1624,15 +2005,11 @@
         function clearSingle() {
             // Alle Arbeitszeit-Eingaben löschen
             for (let i = 1; i <= singleModeTimeBlocks; i++) {
-                const startHourSelect = document.getElementById(`startHour${i}`);
-                const startMinSelect = document.getElementById(`startMin${i}`);
-                const endHourSelect = document.getElementById(`endHour${i}`);
-                const endMinSelect = document.getElementById(`endMin${i}`);
+                const startTimeInput = document.getElementById(`startTime${i}`);
+                const endTimeInput = document.getElementById(`endTime${i}`);
                 
-                if (startHourSelect) startHourSelect.value = '';
-                if (startMinSelect) startMinSelect.value = '';
-                if (endHourSelect) endHourSelect.value = '';
-                if (endMinSelect) endMinSelect.value = '';
+                if (startTimeInput) startTimeInput.value = '';
+                if (endTimeInput) endTimeInput.value = '';
             }
             
             // Zusätzliche Blöcke entfernen (nur 1 behalten)
@@ -1641,10 +2018,10 @@
             }
             
             // Standardwerte wieder setzen
-            document.getElementById('startHour1').value = '07';
-            document.getElementById('startMin1').value = '30';
-            document.getElementById('endHour1').value = '16';
-            document.getElementById('endMin1').value = '45';
+            const startTimeInput = document.getElementById('startTime1');
+            const endTimeInput = document.getElementById('endTime1');
+            if (startTimeInput) startTimeInput.value = '7:30';
+            if (endTimeInput) endTimeInput.value = '16:45';
             
             document.getElementById('workday').value = 'monday';
             document.getElementById('isHoliday').value = 'false';
@@ -2614,45 +2991,29 @@
                 <h4>🕕 Zusätzliche Arbeitszeit ${singleModeTimeBlocks - 1}</h4>
                 <div class="form-group">
                     <div class="form-field">
-                        <label>Beginn</label>
-                        <div class="time-input-group">
-                            <select id="startHour${singleModeTimeBlocks}">
-                                <option value="">--</option>
-                            </select>
-                            <span class="time-separator">:</span>
-                            <select id="startMin${singleModeTimeBlocks}">
-                                <option value="">--</option>
-                                <option value="00">00</option>
-                                <option value="15">15</option>
-                                <option value="30">30</option>
-                                <option value="45">45</option>
-                            </select>
-                        </div>
+                        <label>Beginn (z.B. 1800 für 18:00)</label>
+                        <input type="text" 
+                               class="time-input-quick" 
+                               id="startTime${singleModeTimeBlocks}" 
+                               placeholder="18:00"
+                               onkeydown="handleSingleTimeKeyDown(event)"
+                               onblur="handleSingleTimeBlur(event)"
+                               style="width: 120px; padding: 12px; font-size: 1rem;">
                     </div>
                     <div class="form-field">
-                        <label>Ende</label>
-                        <div class="time-input-group">
-                            <select id="endHour${singleModeTimeBlocks}">
-                                <option value="">--</option>
-                            </select>
-                            <span class="time-separator">:</span>
-                            <select id="endMin${singleModeTimeBlocks}">
-                                <option value="">--</option>
-                                <option value="00">00</option>
-                                <option value="15">15</option>
-                                <option value="30">30</option>
-                                <option value="45">45</option>
-                            </select>
-                        </div>
+                        <label>Ende (z.B. 2200 für 22:00)</label>
+                        <input type="text" 
+                               class="time-input-quick" 
+                               id="endTime${singleModeTimeBlocks}" 
+                               placeholder="22:00"
+                               onkeydown="handleSingleTimeKeyDown(event)"
+                               onblur="handleSingleTimeBlur(event)"
+                               style="width: 120px; padding: 12px; font-size: 1rem;">
                     </div>
                 </div>
             `;
             
             additionalBlocks.appendChild(newBlock);
-            
-            // Populate hour options for the new selects - WICHTIG!
-            populateHourOptions(document.getElementById(`startHour${singleModeTimeBlocks}`));
-            populateHourOptions(document.getElementById(`endHour${singleModeTimeBlocks}`));
         }
 
         function removeTimeBlock() {
@@ -2679,15 +3040,11 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Warte einen Moment, um sicherzustellen, dass alle Elemente geladen sind
             setTimeout(() => {
-                // Populate hour options for initial time block
-                populateHourOptions(document.getElementById('startHour1'));
-                populateHourOptions(document.getElementById('endHour1'));
-                
                 // Standardwerte für Einzelberechnung setzen
-                document.getElementById('startHour1').value = '07';
-                document.getElementById('startMin1').value = '30';
-                document.getElementById('endHour1').value = '16';
-                document.getElementById('endMin1').value = '45';
+                const startTimeInput = document.getElementById('startTime1');
+                const endTimeInput = document.getElementById('endTime1');
+                if (startTimeInput) startTimeInput.value = '7:30';
+                if (endTimeInput) endTimeInput.value = '16:45';
                 
                 // Aktuellen Monat setzen
                 const now = new Date();
