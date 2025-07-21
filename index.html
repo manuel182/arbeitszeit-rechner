@@ -2541,6 +2541,8 @@
             
             // Temporäre Styles für den Druck (ursprüngliche Methode)
             const originalStyles = document.head.innerHTML;
+            const scaleValue = printTableDiv.dataset.scaleValue || '0.95';
+            
             document.head.innerHTML += `
                 <style media="print">
                     body * { visibility: hidden; }
@@ -2552,6 +2554,8 @@
                         width: 100%;
                         height: auto;
                         overflow: visible;
+                        transform: scale(${scaleValue}) !important;
+                        transform-origin: top left !important;
                     }
                     @page { 
                         margin: 8mm; 
@@ -2563,76 +2567,23 @@
                             overflow: visible;
                         }
                         
-                        /* Haupttabelle kompakt aber sichtbar */
-                        table {
-                            font-size: 5pt !important;
-                            border-collapse: collapse !important;
-                            margin-bottom: 5px !important;
-                            width: 100% !important;
-                        }
-                        td, th {
-                            padding: 1px !important;
-                            font-size: 5pt !important;
-                            line-height: 1.0 !important;
-                        }
-                        
-                        /* Header sehr kompakt */
-                        h2 {
-                            font-size: 14pt !important;
-                            margin-bottom: 2px !important;
-                        }
-                        
-                        /* Name/Monat Zeile kompakter */
-                        #printTable > div > div:first-of-type {
-                            margin-bottom: 3px !important;
-                        }
-                        
-                        /* Untertitel kompakter */
-                        #printTable > div > div:first-of-type + div {
-                            margin-bottom: 8px !important;
-                        }
-                        
-                        /* Ruhezeit column */
-                        td:last-child, th:last-child {
-                            font-size: 4pt !important;
-                            white-space: normal !important;
-                            line-height: 1.0 !important;
-                        }
-                        
-                        /* Dienst-Tabelle sichtbar machen */
-                        #printTable table:last-of-type {
-                            font-size: 7pt !important;
-                            width: 60% !important;
-                            margin: 5px auto !important;
-                            border: 1px solid black !important;
-                        }
-                        
-                        /* Dienst-Tabelle Header */
-                        #printTable h3:last-of-type {
-                            font-size: 10pt !important;
-                            margin: 5px 0 3px 0 !important;
-                            text-align: center !important;
-                        }
-                        
-                        /* Dienst-Tabelle Zellen */
-                        #printTable table:last-of-type th,
-                        #printTable table:last-of-type td {
-                            padding: 3px !important;
-                            font-size: 7pt !important;
-                            border: 1px solid black !important;
-                        }
-                        
-                        /* Gesamte Skalierung leicht reduziert */
-                        #printTable {
-                            transform: scale(0.95) !important;
-                            transform-origin: top left !important;
-                        }
-                        
                         /* Verhindere Seitenumbrüche */
                         * {
                             page-break-after: avoid !important;
                             page-break-before: avoid !important;
                             page-break-inside: avoid !important;
+                        }
+                        
+                        /* Dienst-Tabelle sichtbar machen */
+                        #printTable table:last-of-type {
+                            visibility: visible !important;
+                            border: 1px solid black !important;
+                        }
+                        
+                        /* Dienst-Tabelle Zellen */
+                        #printTable table:last-of-type th,
+                        #printTable table:last-of-type td {
+                            border: 1px solid black !important;
                         }
                     }
                 </style>
