@@ -2554,7 +2554,7 @@
                         overflow: hidden;
                     }
                     @page { 
-                        margin: 8mm; 
+                        margin: 6mm; 
                         size: A4;
                     }
                     @media print {
@@ -2567,20 +2567,64 @@
                             page-break-before: avoid !important;
                             page-break-inside: avoid !important;
                         }
-                        /* Mobile PDF optimizations - nur die wichtigsten */
+                        
+                        /* Kompakte Haupttabelle */
                         table {
-                            font-size: 6pt !important;
+                            font-size: 5pt !important;
                             border-collapse: collapse !important;
+                            margin-bottom: 8px !important;
                         }
                         td, th {
-                            padding: 1px !important;
+                            padding: 0.5px !important;
+                            font-size: 5pt !important;
+                            line-height: 1.1 !important;
+                        }
+                        
+                        /* Header kompakter */
+                        h2 {
+                            font-size: 12pt !important;
+                            margin-bottom: 3px !important;
+                        }
+                        
+                        /* Name/Monat Zeile kompakter */
+                        div[style*="margin-bottom: 15px"] {
+                            margin-bottom: 5px !important;
+                        }
+                        
+                        /* Ruhezeit column für mobile optimiert */
+                        td:last-child, th:last-child {
+                            font-size: 4pt !important;
+                            white-space: normal !important;
+                            line-height: 1.1 !important;
+                        }
+                        
+                        /* Dienst-Tabelle sehr kompakt */
+                        div[style*="margin-top: 30px"] {
+                            margin-top: 10px !important;
+                        }
+                        
+                        h3 {
+                            font-size: 10pt !important;
+                            margin-bottom: 5px !important;
+                        }
+                        
+                        /* Dienst-Tabelle kleinere Schrift und weniger Padding */
+                        div[style*="margin-top: 30px"] table {
+                            font-size: 6pt !important;
+                            width: 50% !important;
+                        }
+                        
+                        div[style*="margin-top: 30px"] th,
+                        div[style*="margin-top: 30px"] td {
+                            padding: 2px !important;
                             font-size: 6pt !important;
                         }
-                        /* Ruhezeit column specifically für mobile */
-                        td:last-child, th:last-child {
-                            font-size: 5pt !important;
-                            white-space: normal !important;
-                            line-height: 1.2 !important;
+                        
+                        /* Alles auf eine Seite zwingen */
+                        #printTable > div {
+                            page-break-inside: avoid !important;
+                            transform: scale(0.9) !important;
+                            transform-origin: top left !important;
                         }
                     }
                 </style>
