@@ -514,7 +514,7 @@
             }
             
             .content {
-                padding: 20px;
+                padding: 15px;
             }
             
             .form-group {
@@ -527,6 +527,12 @@
 
             .month-calendar {
                 grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .day-card {
+                padding: 15px;
+                margin: 0;
             }
 
             .mode-selector {
@@ -536,6 +542,60 @@
 
             .day-inputs {
                 grid-template-columns: 1fr;
+            }
+
+            .input-section {
+                padding: 20px;
+            }
+
+            .month-header {
+                padding: 20px;
+            }
+
+            .result-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+
+            .result-item {
+                padding: 12px;
+            }
+
+            /* Mobile-optimierte Day-Card Inhalte */
+            .day-card .form-field > div {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .day-card .form-field > div[style*="grid-template-columns"] {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            .ruhezeit-inputs,
+            .day-inputs-quick,
+            .day-inputs-additional {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+
+            /* Kleinere Schriftgrößen für mobile */
+            .day-card label {
+                font-size: 0.75rem !important;
+            }
+
+            .time-input-quick {
+                width: 100%;
+                min-width: 50px;
+            }
+
+            /* Button-Verbesserungen für mobile */
+            .day-card button {
+                padding: 4px 8px;
+                font-size: 0.7rem;
+                margin: 1px;
             }
         }
 
