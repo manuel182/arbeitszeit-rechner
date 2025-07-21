@@ -203,6 +203,22 @@
             align-items: center;
         }
 
+        .ruhezeit-inputs {
+            display: grid;
+            grid-template-columns: 60px 60px;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .ruhezeit-labels {
+            display: grid;
+            grid-template-columns: 60px 60px;
+            gap: 5px;
+            margin-bottom: 3px;
+            font-size: 0.6rem;
+            color: #666;
+        }
+
         .time-blocks {
             display: grid;
             gap: 20px;
@@ -349,6 +365,22 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
+        /* Spezielle Styling für Wochentage */
+        .day-card.saturday {
+            border: 2px solid #ffc107;
+            background: linear-gradient(135deg, #fffef7, #fff9c4);
+        }
+
+        .day-card.sunday {
+            border: 2px solid #dc3545;
+            background: linear-gradient(135deg, #fff5f5, #ffe6e6);
+        }
+
+        .day-card.holiday {
+            border: 2px solid #dc3545;
+            background: linear-gradient(135deg, #fff5f5, #ffe6e6);
+        }
+
         .day-header {
             display: flex;
             justify-content: space-between;
@@ -366,12 +398,36 @@
             min-width: 30px;
         }
 
+        .day-number.saturday {
+            color: #e67e22;
+        }
+
+        .day-number.sunday {
+            color: #dc3545;
+        }
+
+        .day-number.holiday {
+            color: #dc3545;
+        }
+
         .weekday {
             font-size: 0.9rem;
             color: #6c757d;
             text-align: right;
             flex: 1;
             margin-left: 10px;
+        }
+
+        .weekday.saturday {
+            color: #e67e22;
+        }
+
+        .weekday.sunday {
+            color: #dc3545;
+        }
+
+        .weekday.holiday {
+            color: #dc3545;
         }
 
         .day-inputs {
@@ -927,9 +983,11 @@
             const diaeten = document.getElementById(`diaeten_${day}`).value;
             const zeitausgleich = getTimeFromDropdowns(`zeitausgleichH_${day}`, `zeitausgleichM_${day}`);
             const zeitFirma = getTimeFromDropdowns(`zeitFirmaH_${day}`, `zeitFirmaM_${day}`);
+            const ruhezeitVon = getTimeFromInput(`ruhezeitVon_${day}`);
+            const ruhezeitBis = getTimeFromInput(`ruhezeitBis_${day}`);
             
             const hasAnyData = startTime1 || endTime1 || dienst1 || dienst2 || einsatzpauschalen > 0 || 
-                             krankUrlaub || diaeten || zeitausgleich || zeitFirma;
+                             krankUrlaub || diaeten || zeitausgleich || zeitFirma || ruhezeitVon || ruhezeitBis;
             
             if (!hasAnyData) {
                 alert('Bitte erst Zeiten oder andere Daten für diesen Tag eingeben.');
@@ -971,6 +1029,8 @@
                     const targetZeitausgleichM = document.getElementById(`zeitausgleichM_${targetDay}`);
                     const targetZeitFirmaH = document.getElementById(`zeitFirmaH_${targetDay}`);
                     const targetZeitFirmaM = document.getElementById(`zeitFirmaM_${targetDay}`);
+                    const targetRuhezeitVon = document.getElementById(`ruhezeitVon_${targetDay}`);
+                    const targetRuhezeitBis = document.getElementById(`ruhezeitBis_${targetDay}`);
                     
                     if (targetInput1) targetInput1.value = startTime1;
                     if (targetInput2) targetInput2.value = endTime1;
@@ -995,6 +1055,10 @@
                         if (targetZeitFirmaH) targetZeitFirmaH.value = hours;
                         if (targetZeitFirmaM) targetZeitFirmaM.value = minutes;
                     }
+                    
+                    // Ruhezeit Von-Bis setzen
+                    if (targetRuhezeitVon) targetRuhezeitVon.value = ruhezeitVon;
+                    if (targetRuhezeitBis) targetRuhezeitBis.value = ruhezeitBis;
                     
                     // Zusätzliche Arbeitszeiten hinzufügen falls vorhanden
                     additionalTimes.forEach((time, index) => {
@@ -1021,6 +1085,8 @@
                     monthData[targetDay].diaeten = diaeten;
                     monthData[targetDay].zeitausgleich = zeitausgleich;
                     monthData[targetDay].zeitFirma = zeitFirma;
+                    monthData[targetDay].ruhezeitVon = ruhezeitVon;
+                    monthData[targetDay].ruhezeitBis = ruhezeitBis;
                     
                     updateDaySummary(targetDay);
                 }
@@ -1524,16 +1590,35 @@
                 const dayCard = document.createElement('div');
                 dayCard.className = 'day-card';
                 
-                // Spezielle Styling für Feiertage
+                // Spezielle CSS-Klassen für Wochentage
                 if (isHolidayDay) {
-                    dayCard.style.border = '2px solid #dc3545';
-                    dayCard.style.background = 'linear-gradient(135deg, #fff5f5, #ffe6e6)';
+                    dayCard.classList.add('holiday');
+                } else if (weekday === 'sunday') {
+                    dayCard.classList.add('sunday');
+                } else if (weekday === 'saturday') {
+                    dayCard.classList.add('saturday');
                 }
+                
+                // Bestimme Standardzeiten basierend auf Wochentag
+                let defaultStartTime = '';
+                let defaultEndTime = '';
+                let defaultPause = false;
+                
+                if (weekday === 'monday' || weekday === 'tuesday' || weekday === 'wednesday' || weekday === 'thursday') {
+                    defaultStartTime = '7:30';
+                    defaultEndTime = '16:46';
+                    defaultPause = true; // Mo-Do: Pause angekreuzt
+                } else if (weekday === 'friday') {
+                    defaultStartTime = '7:30';
+                    defaultEndTime = '12:00';
+                    defaultPause = false;
+                }
+                // Samstag und Sonntag: keine Standardzeiten
                 
                 dayCard.innerHTML = `
                     <div class="day-header">
-                        <div class="day-number" style="${isHolidayDay ? 'color: #dc3545; font-weight: bold;' : ''}">${day}.</div>
-                        <div class="weekday" style="${isHolidayDay ? 'color: #dc3545;' : ''}">${day}. ${fullWeekdayName}</div>
+                        <div class="day-number ${isHolidayDay ? 'holiday' : weekday}">${day}.</div>
+                        <div class="weekday ${isHolidayDay ? 'holiday' : weekday}">${day}. ${fullWeekdayName}</div>
                     </div>
                     
                     ${isHolidayDay ? `
@@ -1548,7 +1633,7 @@
                                 <input type="checkbox" id="holiday_${day}" onchange="updateDaySummary(${day})" ${isHolidayDay ? 'checked' : ''}> Feiertag
                             </label>
                             <label style="font-size: 0.8rem;">
-                                <input type="checkbox" id="pause_${day}" onchange="updateDaySummary(${day})"> Pause (0:45h)
+                                <input type="checkbox" id="pause_${day}" onchange="updateDaySummary(${day})" ${defaultPause ? 'checked' : ''}> Pause (0:45h)
                             </label>
                         </div>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px;">
@@ -1614,7 +1699,32 @@
                                 </div>
                             </label>
                         </div>
-                        <div style="margin-top: 5px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 5px;">
+                            <label style="font-size: 0.8rem;">
+                                Ruhezeit:
+                                <div class="ruhezeit-labels">
+                                    <div>Von</div>
+                                    <div>Bis</div>
+                                </div>
+                                <div class="ruhezeit-inputs">
+                                    <input type="text" 
+                                           class="time-input-quick" 
+                                           id="ruhezeitVon_${day}" 
+                                           data-day="${day}"
+                                           placeholder=""
+                                           onkeydown="handleTimeKeyDown(event)"
+                                           onblur="handleTimeBlur(event)"
+                                           style="font-size: 0.7rem;">
+                                    <input type="text" 
+                                           class="time-input-quick" 
+                                           id="ruhezeitBis_${day}" 
+                                           data-day="${day}"
+                                           placeholder=""
+                                           onkeydown="handleTimeKeyDown(event)"
+                                           onblur="handleTimeBlur(event)"
+                                           style="font-size: 0.7rem;">
+                                </div>
+                            </label>
                             <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
                                 Einsatzpauschalen (1-9): 
                                 <input type="number" 
@@ -1629,6 +1739,9 @@
                     </div>
                     
                     <div id="timeInputs_${day}">
+                        <label style="font-size: 0.8rem; margin-bottom: 5px; display: block; font-weight: bold;">
+                            Arbeitszeit:
+                        </label>
                         <div class="input-labels">
                             <div>Beginn</div>
                             <div>Ende</div>
@@ -1638,7 +1751,7 @@
                                    class="time-input-quick" 
                                    id="start1_${day}" 
                                    data-day="${day}"
-                                   placeholder="07:30"
+                                   placeholder="${defaultStartTime}"
                                    onkeydown="handleTimeKeyDown(event)"
                                    onblur="handleTimeBlur(event)"
                                    tabindex="${day * 10 + 1}">
@@ -1646,7 +1759,7 @@
                                    class="time-input-quick" 
                                    id="end1_${day}" 
                                    data-day="${day}"
-                                   placeholder="16:45"
+                                   placeholder="${defaultEndTime}"
                                    onkeydown="handleTimeKeyDown(event)"
                                    onblur="handleTimeBlur(event)"
                                    tabindex="${day * 10 + 2}">
@@ -1671,7 +1784,7 @@
                     date: date,
                     isHoliday: isHolidayDay,
                     holidayName: holidayName,
-                    hasPause: false,
+                    hasPause: defaultPause,
                     dienst1: false,
                     dienst2: false,
                     einsatzpauschalen: 0,
@@ -1679,6 +1792,8 @@
                     diaeten: '',
                     zeitausgleich: '',
                     zeitFirma: '',
+                    ruhezeitVon: '',
+                    ruhezeitBis: '',
                     timeBlocks: 1
                 };
             }
@@ -1695,6 +1810,20 @@
             return `${hourSelect.value}:${minSelect.value}`;
         }
 
+        function calculateRuhezeitDuration(ruhezeitVon, ruhezeitBis) {
+            if (!ruhezeitVon || !ruhezeitBis) return 0;
+            
+            const vonMinutes = timeToMinutes(ruhezeitVon);
+            let bisMinutes = timeToMinutes(ruhezeitBis);
+            
+            // Behandle Zeiten über Mitternacht
+            if (bisMinutes < vonMinutes) {
+                bisMinutes += 1440; // 24 Stunden hinzufügen
+            }
+            
+            return bisMinutes - vonMinutes;
+        }
+
         function updateDaySummary(day) {
             const isHoliday = document.getElementById(`holiday_${day}`).checked;
             const hasPause = document.getElementById(`pause_${day}`).checked;
@@ -1705,6 +1834,8 @@
             const diaeten = document.getElementById(`diaeten_${day}`).value;
             const zeitausgleich = getTimeFromDropdowns(`zeitausgleichH_${day}`, `zeitausgleichM_${day}`);
             const zeitFirma = getTimeFromDropdowns(`zeitFirmaH_${day}`, `zeitFirmaM_${day}`);
+            const ruhezeitVon = getTimeFromInput(`ruhezeitVon_${day}`);
+            const ruhezeitBis = getTimeFromInput(`ruhezeitBis_${day}`);
             
             monthData[day].isHoliday = isHoliday;
             monthData[day].hasPause = hasPause;
@@ -1715,6 +1846,8 @@
             monthData[day].diaeten = diaeten;
             monthData[day].zeitausgleich = zeitausgleich;
             monthData[day].zeitFirma = zeitFirma;
+            monthData[day].ruhezeitVon = ruhezeitVon;
+            monthData[day].ruhezeitBis = ruhezeitBis;
             
             const summaryDiv = document.getElementById(`summary_${day}`);
             
@@ -1730,6 +1863,10 @@
                 if (diaeten) additionalItems.push(`${diaeten} Diät`);
                 if (zeitausgleich) additionalItems.push(`Zeitausgleich: ${zeitausgleich}h`);
                 if (zeitFirma) additionalItems.push(`Zeit Firma: ${zeitFirma}h`);
+                if (ruhezeitVon && ruhezeitBis) {
+                    const ruhezeitDauer = calculateRuhezeitDuration(ruhezeitVon, ruhezeitBis);
+                    additionalItems.push(`Ruhezeit: ${ruhezeitVon}-${ruhezeitBis} (${minutesToHours(ruhezeitDauer)}h)`);
+                }
                 
                 if (additionalItems.length > 0) {
                     summaryText += `<br><strong>Zusätzlich:</strong> ${additionalItems.join(', ')}`;
@@ -1762,7 +1899,7 @@
                 }
             }
             
-            if (timeBlocks.length === 0 && !dienst1 && !dienst2 && einsatzpauschalen === 0 && !diaeten && !zeitausgleich && !zeitFirma) {
+            if (timeBlocks.length === 0 && !dienst1 && !dienst2 && einsatzpauschalen === 0 && !diaeten && !zeitausgleich && !zeitFirma && !ruhezeitVon && !ruhezeitBis) {
                 summaryDiv.innerHTML = 'Keine Arbeitszeit eingetragen';
                 return;
             }
@@ -1804,6 +1941,10 @@
             if (diaeten) additionalItems.push(`${diaeten} Diät`);
             if (zeitausgleich) additionalItems.push(`Zeitausgleich: ${zeitausgleich}h`);
             if (zeitFirma) additionalItems.push(`Zeit Firma: ${zeitFirma}h`);
+            if (ruhezeitVon && ruhezeitBis) {
+                const ruhezeitDauer = calculateRuhezeitDuration(ruhezeitVon, ruhezeitBis);
+                additionalItems.push(`Ruhezeit: ${ruhezeitVon}-${ruhezeitBis} (${minutesToHours(ruhezeitDauer)}h)`);
+            }
             
             if (additionalItems.length > 0) {
                 if (summaryText) summaryText += '<br>';
@@ -1828,8 +1969,21 @@
                 display_break_time: 0,
                 workDays: 0,
                 totalWorkTime: 0,
-                dienst1Count: 0,
-                dienst2Count: 0,
+                // Dienst-Statistiken nach Wochentagen
+                dienst1Stats: {
+                    monday: 0, tuesday: 0, wednesday: 0, thursday: 0, // Mo-Do
+                    friday: 0, // Fr
+                    saturday: 0, // Sa
+                    sunday: 0, // So
+                    total: 0
+                },
+                dienst2Stats: {
+                    monday: 0, tuesday: 0, wednesday: 0, thursday: 0, // Mo-Do
+                    friday: 0, // Fr
+                    saturday: 0, // Sa
+                    sunday: 0, // So
+                    total: 0
+                },
                 totalEinsatzpauschalen: 0,
                 krankTage: 0,
                 urlaubTage: 0,
@@ -1837,7 +1991,8 @@
                 mittlereDiaetCount: 0,
                 grosseDiaetCount: 0,
                 totalZeitausgleich: 0,
-                totalMontagezulage: 0
+                totalMontagezulage: 0,
+                totalRuhezeit: 0
             };
 
             const employeeName = document.getElementById('employeeName').value;
@@ -1909,9 +2064,23 @@
                     monthTotal.totalZeitausgleich += timeToMinutes(dayData.zeitausgleich);
                 }
                 
-                // Zusätzliche Dienste und Pauschalen zählen
-                if (dayData.dienst1) monthTotal.dienst1Count++;
-                if (dayData.dienst2) monthTotal.dienst2Count++;
+                // Ruhezeit summieren (Von-Bis berechnen)
+                if (dayData.ruhezeitVon && dayData.ruhezeitBis) {
+                    const ruhezeitDauer = calculateRuhezeitDuration(dayData.ruhezeitVon, dayData.ruhezeitBis);
+                    monthTotal.totalRuhezeit += ruhezeitDauer;
+                }
+                
+                // Dienst-Statistiken nach Wochentagen
+                if (dayData.dienst1) {
+                    monthTotal.dienst1Stats[dayData.weekday]++;
+                    monthTotal.dienst1Stats.total++;
+                }
+                if (dayData.dienst2) {
+                    monthTotal.dienst2Stats[dayData.weekday]++;
+                    monthTotal.dienst2Stats.total++;
+                }
+                
+                // Einsatzpauschalen summieren
                 if (dayData.einsatzpauschalen) monthTotal.totalEinsatzpauschalen += dayData.einsatzpauschalen;
                 
                 // Diäten zählen
@@ -1969,12 +2138,12 @@
                         <div class="value">${minutesToHours(monthTotal.display_break_time || monthTotal.break_time)} h</div>
                     </div>
                     <div class="result-item">
-                        <div class="label">Dienst 1</div>
-                        <div class="value">${monthTotal.dienst1Count}x</div>
+                        <div class="label">Dienst 1 Gesamt</div>
+                        <div class="value">${monthTotal.dienst1Stats.total}x</div>
                     </div>
                     <div class="result-item">
-                        <div class="label">Dienst 2</div>
-                        <div class="value">${monthTotal.dienst2Count}x</div>
+                        <div class="label">Dienst 2 Gesamt</div>
+                        <div class="value">${monthTotal.dienst2Stats.total}x</div>
                     </div>
                     <div class="result-item">
                         <div class="label">Einsatzpauschalen</div>
@@ -2000,6 +2169,10 @@
                         <div class="label">Montagezulage</div>
                         <div class="value">${minutesToHours(monthTotal.totalMontagezulage)} h</div>
                     </div>
+                    <div class="result-item">
+                        <div class="label">Ruhezeit</div>
+                        <div class="value">${minutesToHours(monthTotal.totalRuhezeit)} h</div>
+                    </div>
                 </div>
             `;
 
@@ -2011,6 +2184,12 @@
         function generateOfficialPDF(employeeName, monthInput, monthTotal) {
             const printTableDiv = document.getElementById('printTable');
             
+            // Berechne Mo-Do Summen für Dienste
+            const dienst1MoDo = monthTotal.dienst1Stats.monday + monthTotal.dienst1Stats.tuesday + 
+                               monthTotal.dienst1Stats.wednesday + monthTotal.dienst1Stats.thursday;
+            const dienst2MoDo = monthTotal.dienst2Stats.monday + monthTotal.dienst2Stats.tuesday + 
+                               monthTotal.dienst2Stats.wednesday + monthTotal.dienst2Stats.thursday;
+            
             let tableHTML = `
                 <div style="max-width: 210mm; margin: 0 auto; padding: 15mm; font-family: Arial, sans-serif; font-size: 10pt; background: white;">
                     <div style="text-align: center; margin-bottom: 15px;">
@@ -2018,7 +2197,7 @@
                         <div style="font-size: 8pt; margin-top: 3px;">(Mittagspause von 12:00 bis 12:45 Uhr)</div>
                     </div>
                     
-                    <div style="margin-bottom: 10px; display: flex; justify-content: space-between;">
+                    <div style="margin-bottom: 15px; display: flex; justify-content: space-between;">
                         <div>
                             <strong>NAME:</strong> <span style="border-bottom: 1px solid black; padding-bottom: 1px; min-width: 180px; display: inline-block;">${employeeName}</span>
                         </div>
@@ -2027,7 +2206,7 @@
                         </div>
                     </div>
                     
-                    <table style="width: 100%; border-collapse: collapse; border: 2px solid black; font-size: 7pt;">
+                    <table style="width: 100%; border-collapse: collapse; border: 2px solid black; font-size: 7pt; margin-bottom: 20px;">
                         <thead>
                             <tr style="border-bottom: 2px solid black;">
                                 <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0; font-size: 7pt;">Datum</th>
@@ -2043,6 +2222,7 @@
                                 <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Diäten</th>
                                 <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Zeitausgleich</th>
                                 <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Montagezulage</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 10%; background: #f0f0f0; font-size: 6pt;">Ruhezeit</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2068,6 +2248,7 @@
                 let diaetenText = '';
                 let zeitausgleichText = '';
                 let montagezulageText = '';
+                let ruhezeitText = '';
                 let result = null;
                 
                 if (monthData[day]) {
@@ -2134,6 +2315,12 @@
                     
                     // Zeitausgleich
                     zeitausgleichText = monthData[day].zeitausgleich || '';
+                    
+                    // Ruhezeit (Von-Bis Format - einzeilig)
+                    if (monthData[day].ruhezeitVon && monthData[day].ruhezeitBis) {
+                        const ruhezeitDauer = calculateRuhezeitDuration(monthData[day].ruhezeitVon, monthData[day].ruhezeitBis);
+                        ruhezeitText = `${monthData[day].ruhezeitVon} - ${monthData[day].ruhezeitBis} (${minutesToHours(ruhezeitDauer)}h)`;
+                    }
                 }
                 
                 tableHTML += `
@@ -2151,6 +2338,7 @@
                         <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt;">${diaetenText}</td>
                         <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${zeitausgleichText}</td>
                         <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${montagezulageText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt; white-space: nowrap;">${ruhezeitText}</td>
                     </tr>
                 `;
                 
@@ -2158,7 +2346,7 @@
                 if (timeDisplay.includes(',') && !monthData[day]?.krankUrlaub) {
                     tableHTML += `
                         <tr style="height: 12px; background: #f8f8f8;">
-                            <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt; font-style: italic;" colspan="13">
+                            <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt; font-style: italic;" colspan="14">
                                 Zeiten: ${timeDisplay}
                             </td>
                         </tr>
@@ -2178,11 +2366,7 @@
                                 <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.surcharge_50)}</td>
                                 <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.taxed_100)}</td>
                                 <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.tax_free_100)}</td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 6pt;">
-                                    ${monthTotal.dienst1Count > 0 ? `1.D: ${monthTotal.dienst1Count}x` : ''}
-                                    ${monthTotal.dienst1Count > 0 && monthTotal.dienst2Count > 0 ? '<br>' : ''}
-                                    ${monthTotal.dienst2Count > 0 ? `2.D: ${monthTotal.dienst2Count}x` : ''}
-                                </td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 6pt;">-</td>
                                 <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${monthTotal.totalEinsatzpauschalen}</td>
                                 <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 6pt;">
                                     ${monthTotal.kleineDiaetCount > 0 ? `kl: ${monthTotal.kleineDiaetCount}` : ''}
@@ -2193,9 +2377,45 @@
                                 </td>
                                 <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalZeitausgleich)}</td>
                                 <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalMontagezulage)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalRuhezeit)}</td>
                             </tr>
                         </tfoot>
                     </table>
+                    
+                    <!-- Dienst-Tabelle (unten) -->
+                    <div style="margin-top: 20px;">
+                        <h3 style="font-size: 12pt; margin-bottom: 10px; text-align: center;">DIENST-ÜBERSICHT</h3>
+                        <table style="width: 60%; margin: 0 auto; border-collapse: collapse; border: 1px solid black; font-size: 8pt;">
+                            <thead>
+                                <tr style="background: #f0f0f0;">
+                                    <th style="border: 1px solid black; padding: 6px; text-align: left; font-weight: bold;">Dienst</th>
+                                    <th style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">Mo-Do</th>
+                                    <th style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">Fr</th>
+                                    <th style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">Sa</th>
+                                    <th style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">So</th>
+                                    <th style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">Gesamt</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="border: 1px solid black; padding: 6px; font-weight: bold;">Dienst 1:</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${dienst1MoDo}</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${monthTotal.dienst1Stats.friday}</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${monthTotal.dienst1Stats.saturday}</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${monthTotal.dienst1Stats.sunday}</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">${monthTotal.dienst1Stats.total}</td>
+                                </tr>
+                                <tr>
+                                    <td style="border: 1px solid black; padding: 6px; font-weight: bold;">Dienst 2:</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${dienst2MoDo}</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${monthTotal.dienst2Stats.friday}</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${monthTotal.dienst2Stats.saturday}</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: center;">${monthTotal.dienst2Stats.sunday}</td>
+                                    <td style="border: 1px solid black; padding: 6px; text-align: center; font-weight: bold;">${monthTotal.dienst2Stats.total}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             `;
 
