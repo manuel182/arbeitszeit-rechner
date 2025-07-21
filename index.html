@@ -3004,103 +3004,88 @@
             const scaleValue = printTableDiv.dataset.scaleValue || '0.95';
             const additionalTimes = parseInt(printTableDiv.dataset.additionalTimes) || 0;
             
-            // Setze den Dokumenttitel für die PDF
-            const originalTitle = document.title;
-            document.title = fileName;
+            // Erstelle ein neues Fenster nur für den Druck
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
             
-            printTableDiv.style.display = 'block';
+            // Schreibe komplettes HTML-Dokument in das neue Fenster
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${fileName}</title>
+                    <style>
+                        @page { 
+                            margin: 8mm; 
+                            size: A4;
+                        }
+                        
+                        * {
+                            margin: 0;
+                            padding: 0;
+                            box-sizing: border-box;
+                        }
+                        
+                        body {
+                            font-family: Arial, sans-serif;
+                            transform: scale(${scaleValue});
+                            transform-origin: top left;
+                        }
+                        
+                        table {
+                            border-collapse: collapse;
+                            width: 100%;
+                        }
+                        
+                        th, td {
+                            border: 1px solid black;
+                            text-align: center;
+                            vertical-align: middle;
+                        }
+                        
+                        @media print {
+                            body {
+                                transform: scale(${scaleValue});
+                                transform-origin: top left;
+                            }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${printTableDiv.innerHTML}
+                </body>
+                </html>
+            `);
             
-            // Temporäre Styles für den Druck
-            const originalStyles = document.head.innerHTML;
+            printWindow.document.close();
             
-            document.head.innerHTML += `
-                <style media="print">
-                    body * { visibility: hidden; }
-                    #printTable, #printTable * { visibility: visible; }
-                    #printTable { 
-                        position: absolute; 
-                        left: 0; 
-                        top: 0; 
-                        width: 100%;
-                        height: auto;
-                        overflow: visible;
-                        transform: scale(${scaleValue}) !important;
-                        transform-origin: top left !important;
-                    }
-                    @page { 
-                        margin: 8mm; 
-                        size: A4;
+            // Warte bis das Dokument geladen ist, dann drucke
+            printWindow.onload = function() {
+                setTimeout(() => {
+                    let message = `💾 PDF-Dateiname:\n\n"${fileName}.pdf"\n\n`;
+                    
+                    if (additionalTimes > 0) {
+                        if (additionalTimes <= 3) {
+                            message += `✅ PDF automatisch optimiert für ${additionalTimes} Tage mit mehreren Arbeitszeiten (Normal-Darstellung)\n\n`;
+                        } else if (additionalTimes <= 8) {
+                            message += `📊 PDF automatisch optimiert für ${additionalTimes} Tage mit mehreren Arbeitszeiten (Leicht kompakt)\n\n`;
+                        } else if (additionalTimes <= 15) {
+                            message += `📈 PDF automatisch optimiert für ${additionalTimes} Tage mit mehreren Arbeitszeiten (Kompakt)\n\n`;
+                        } else {
+                            message += `🔥 PDF automatisch optimiert für ${additionalTimes} Tage mit mehreren Arbeitszeiten (Sehr kompakt)\n\n`;
+                        }
                     }
                     
-                    @media print {
-                        html, body {
-                            height: auto;
-                            overflow: visible;
-                        }
-                        
-                        /* Verhindere Seitenumbrüche */
-                        * {
-                            page-break-after: avoid !important;
-                            page-break-before: avoid !important;
-                            page-break-inside: avoid !important;
-                        }
-                        
-                        /* Tabellen-Styling */
-                        #printTable table {
-                            page-break-inside: avoid !important;
-                        }
-                        
-                        #printTable thead {
-                            display: table-header-group !important;
-                        }
-                        
-                        #printTable tfoot {
-                            display: table-footer-group !important;
-                        }
-                        
-                        /* Dienst-Tabelle sichtbar machen */
-                        #printTable table:last-of-type {
-                            visibility: visible !important;
-                            border: 1px solid black !important;
-                        }
-                        
-                        /* Dienst-Tabelle Zellen */
-                        #printTable table:last-of-type th,
-                        #printTable table:last-of-type td {
-                            border: 1px solid black !important;
-                        }
-                    }
-                </style>
-            `;
-            
-            // Zeige Info-Dialog mit Dateinamen und Optimierungs-Info
-            setTimeout(() => {
-                let message = `💾 PDF-Dateiname:\n\n"${fileName}.pdf"\n\n`;
-                
-                if (additionalTimes > 0) {
-                    if (additionalTimes <= 3) {
-                        message += `✅ PDF automatisch optimiert für ${additionalTimes} Tage mit mehreren Arbeitszeiten (Normal-Darstellung)\n\n`;
-                    } else if (additionalTimes <= 8) {
-                        message += `📊 PDF automatisch optimiert für ${additionalTimes} Tage mit mehreren Arbeitszeiten (Leicht kompakt)\n\n`;
-                    } else if (additionalTimes <= 15) {
-                        message += `📈 PDF automatisch optimiert für ${additionalTimes} Tage mit mehreren Arbeitszeiten (Kompakt)\n\n`;
-                    } else {
-                        message += `🔥 PDF automatisch optimiert für ${additionalTimes} Tage mit mehreren Arbeitszeiten (Sehr kompakt)\n\n`;
-                    }
-                }
-                
-                message += `Wählen Sie im Druckdialog "Als PDF speichern".`;
-                
-                alert(message);
-                window.print();
-            }, 100);
-            
-            // Styles zurücksetzen
-            setTimeout(() => {
-                printTableDiv.style.display = 'none';
-                document.head.innerHTML = originalStyles;
-                document.title = originalTitle;
-            }, 2000);
+                    message += `Wählen Sie im Druckdialog "Als PDF speichern".`;
+                    
+                    alert(message);
+                    printWindow.print();
+                    
+                    // Schließe das Fenster nach dem Drucken
+                    setTimeout(() => {
+                        printWindow.close();
+                    }, 1000);
+                }, 500);
+            };
         }
 
         function addTimeBlock() {
