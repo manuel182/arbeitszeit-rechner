@@ -2318,7 +2318,7 @@
                                 <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Diäten</th>
                                 <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Zeitausgleich</th>
                                 <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Montagezulage</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 10%; background: #f0f0f0; font-size: 6pt;">Ruhezeit</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 12%; background: #f0f0f0; font-size: 6pt;">Ruhezeit</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2434,7 +2434,7 @@
                         <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt;">${diaetenText}</td>
                         <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${zeitausgleichText}</td>
                         <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${montagezulageText}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt; white-space: nowrap;">${ruhezeitText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt; white-space: nowrap; min-width: 80px;">${ruhezeitText}</td>
                     </tr>
                 `;
                 
@@ -2553,7 +2553,7 @@
                         overflow: hidden;
                     }
                     @page { 
-                        margin: 10mm; 
+                        margin: 8mm; 
                         size: A4;
                     }
                     @media print {
@@ -2565,6 +2565,22 @@
                             page-break-after: avoid !important;
                             page-break-before: avoid !important;
                             page-break-inside: avoid !important;
+                        }
+                        /* Mobile PDF optimizations */
+                        table {
+                            font-size: 6pt !important;
+                            border-collapse: collapse !important;
+                        }
+                        td, th {
+                            padding: 1px !important;
+                            font-size: 6pt !important;
+                            white-space: nowrap !important;
+                        }
+                        /* Ruhezeit column specifically */
+                        td:last-child, th:last-child {
+                            min-width: 90px !important;
+                            width: 90px !important;
+                            font-size: 5pt !important;
                         }
                     }
                 </style>
