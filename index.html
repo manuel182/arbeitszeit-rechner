@@ -2537,129 +2537,93 @@
             const originalTitle = document.title;
             document.title = fileName;
             
-            // Verstecke alle anderen Elemente
-            document.querySelectorAll('body > *:not(#printTable)').forEach(el => {
-                el.style.display = 'none';
-            });
-            
+            // Mobile-freundliche Print-Methode
             printTableDiv.style.display = 'block';
-            printTableDiv.style.position = 'static';
-            printTableDiv.style.width = '100%';
-            printTableDiv.style.margin = '0';
-            printTableDiv.style.padding = '0';
             
-            // Entferne temporäre Styles
-            const existingPrintStyles = document.getElementById('temp-print-styles');
-            if (existingPrintStyles) {
-                existingPrintStyles.remove();
-            }
+            // Entferne existierende Print-Styles
+            const existingPrintStyles = document.querySelectorAll('style[id^="temp-print-styles"]');
+            existingPrintStyles.forEach(style => style.remove());
             
-            // Füge optimierte Print-Styles hinzu
+            // Einfache, mobile-kompatible Print-Styles
             const printStyles = document.createElement('style');
-            printStyles.id = 'temp-print-styles';
+            printStyles.id = 'temp-print-styles-mobile';
+            printStyles.media = 'print';
             printStyles.innerHTML = `
                 @media print {
-                    * {
-                        margin: 0 !important;
-                        padding: 0 !important;
-                        box-sizing: border-box !important;
+                    body * {
+                        visibility: hidden;
                     }
                     
-                    body {
-                        font-family: Arial, sans-serif !important;
-                        font-size: 8pt !important;
-                        line-height: 1.2 !important;
-                        background: white !important;
-                        color: black !important;
+                    #printTable, #printTable * {
+                        visibility: visible;
+                    }
+                    
+                    #printTable {
+                        position: absolute;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        margin: 0;
+                        padding: 0;
                     }
                     
                     @page {
-                        margin: 10mm !important;
-                        size: A4 !important;
+                        margin: 8mm;
+                        size: A4;
                     }
                     
+                    /* Mobile PDF optimizations */
                     table {
                         width: 100% !important;
                         border-collapse: collapse !important;
-                        font-size: 6pt !important;
-                        page-break-inside: avoid !important;
+                        font-size: 5pt !important;
                     }
                     
                     th, td {
                         border: 1px solid black !important;
-                        padding: 2px !important;
-                        font-size: 6pt !important;
+                        padding: 1px !important;
+                        font-size: 5pt !important;
                         text-align: center !important;
-                        white-space: nowrap !important;
-                        overflow: visible !important;
                     }
                     
-                    /* Ruhezeit-Spalte extra breit */
+                    /* Ruhezeit-Spalte */
                     th:last-child, td:last-child {
                         width: 20% !important;
-                        min-width: 150px !important;
+                        font-size: 4pt !important;
                         white-space: normal !important;
-                        font-size: 5pt !important;
                         line-height: 1.1 !important;
-                        overflow: visible !important;
                     }
                     
-                    /* Andere Spalten kompakter */
-                    th:nth-child(10), td:nth-child(10) { /* Einsatz */
-                        font-size: 5pt !important;
-                    }
-                    
-                    th:nth-child(12), td:nth-child(12) { /* Zeitausgleich */
-                        font-size: 5pt !important;
-                    }
-                    
-                    th:nth-child(13), td:nth-child(13) { /* Montagezulage */
-                        font-size: 5pt !important;
-                    }
-                }
-                
-                @media screen {
-                    body > *:not(#printTable) {
-                        display: none !important;
-                    }
-                    
-                    #printTable {
-                        display: block !important;
-                        width: 100% !important;
-                        margin: 0 !important;
-                        padding: 20px !important;
-                    }
+                    /* Kompakte Spalten für mobile */
+                    th:nth-child(9), td:nth-child(9) { width: 6% !important; }
+                    th:nth-child(10), td:nth-child(10) { width: 4% !important; font-size: 4pt !important; }
+                    th:nth-child(11), td:nth-child(11) { width: 5% !important; font-size: 4pt !important; }
+                    th:nth-child(12), td:nth-child(12) { width: 5% !important; font-size: 4pt !important; }
+                    th:nth-child(13), td:nth-child(13) { width: 6% !important; font-size: 4pt !important; }
                 }
             `;
             document.head.appendChild(printStyles);
             
-            // Warte bis Styles angewendet sind, dann drucke
+            // Info-Dialog und Print
             setTimeout(() => {
-                // Zeige Info-Dialog mit Dateinamen
-                alert(`💾 PDF-Dateiname:\n\n"${fileName}.pdf"\n\nWählen Sie im Druckdialog "Als PDF speichern" und verwenden Sie diesen Namen.`);
+                alert(`💾 PDF wird erstellt: "${fileName}.pdf"\n\nWählen Sie "Als PDF speichern" im Dialog.`);
                 
-                // Starke Print-Funktion
+                // Mobile Print mit Verzögerung
                 setTimeout(() => {
                     window.print();
-                }, 500);
+                }, 200);
                 
-                // Cleanup nach dem Drucken
+                // Cleanup
                 setTimeout(() => {
-                    // Stelle alles wieder her
-                    document.querySelectorAll('body > *:not(#printTable)').forEach(el => {
-                        el.style.display = '';
-                    });
-                    
                     printTableDiv.style.display = 'none';
                     document.title = originalTitle;
                     
-                    // Entferne Print-Styles
-                    const tempStyles = document.getElementById('temp-print-styles');
+                    const tempStyles = document.getElementById('temp-print-styles-mobile');
                     if (tempStyles) {
                         tempStyles.remove();
                     }
-                }, 3000);
-            }, 100);
+                }, 2000);
+            }, 300);
         }
 
         function addTimeBlock() {
