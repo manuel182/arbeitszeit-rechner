@@ -2305,20 +2305,20 @@
                     <table style="width: 100%; border-collapse: collapse; border: 2px solid black; font-size: 7pt; margin-bottom: 20px;">
                         <thead>
                             <tr style="border-bottom: 2px solid black;">
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 7pt;">Datum</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 7pt;">VON</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 7pt;">BIS</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 7pt;">GESAMT</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0; font-size: 7pt;">Normal</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 7pt;">50%</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 7pt;">100%</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 7pt;">100% frei</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 9%; background: #f0f0f0; font-size: 6pt;">Datum</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">VON</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">BIS</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0; font-size: 6pt;">GESAMT</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">Normal</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 6pt;">50%</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 6pt;">100%</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">100% frei</th>
                                 <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">Dienst</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 6pt;">Einsatz</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">Diäten</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">Zeit-ausg.</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 4%; background: #f0f0f0; font-size: 6pt;">Eins.</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 6pt;">Diäten</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 6pt;">ZA</th>
                                 <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">Montage</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 16%; background: #f0f0f0; font-size: 6pt;">Ruhezeit</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 20%; background: #f0f0f0; font-size: 6pt;">Ruhezeit</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2359,7 +2359,8 @@
                             const startTime = getTimeFromInput(`start${i}_${day}`);
                             const endTime = getTimeFromInput(`end${i}_${day}`);
                             
-                            if (startTime && endTime) {
+                            // Nur hinzufügen wenn beide Zeiten tatsächlich eingegeben wurden
+                            if (startTime && endTime && startTime.trim() && endTime.trim()) {
                                 timeBlocks.push({
                                     start: startTime,
                                     end: endTime
@@ -2430,11 +2431,11 @@
                         <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${taxed100}</td>
                         <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${taxFree100}</td>
                         <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt;">${dienstText}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${einsatzpauschalenText}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt;">${diaetenText}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${zeitausgleichText}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 7pt;">${montagezulageText}</td>
-                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt; white-space: nowrap; min-width: 80px;">${ruhezeitText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 6pt;">${einsatzpauschalenText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 5pt;">${diaetenText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 5pt;">${zeitausgleichText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 5pt;">${montagezulageText}</td>
+                        <td style="border: 1px solid black; padding: 1px; text-align: center; font-size: 5pt; white-space: normal; line-height: 1.2;">${ruhezeitText}</td>
                     </tr>
                 `;
                 
@@ -2471,9 +2472,9 @@
                                     ${((monthTotal.kleineDiaetCount > 0 || monthTotal.mittlereDiaetCount > 0) && monthTotal.grosseDiaetCount > 0) ? '<br>' : ''}
                                     ${monthTotal.grosseDiaetCount > 0 ? `gr: ${monthTotal.grosseDiaetCount}` : ''}
                                 </td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalZeitausgleich)}</td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalMontagezulage)}</td>
-                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 7pt;">${minutesToHours(monthTotal.totalRuhezeit)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 6pt;">${minutesToHours(monthTotal.totalZeitausgleich)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 6pt;">${minutesToHours(monthTotal.totalMontagezulage)}</td>
+                                <td style="border: 1px solid black; padding: 2px; text-align: center; font-size: 5pt; white-space: normal;">${minutesToHours(monthTotal.totalRuhezeit)}</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -2595,11 +2596,12 @@
                     
                     /* Ruhezeit-Spalte extra breit */
                     th:last-child, td:last-child {
-                        width: 16% !important;
-                        min-width: 120px !important;
+                        width: 20% !important;
+                        min-width: 150px !important;
                         white-space: normal !important;
                         font-size: 5pt !important;
                         line-height: 1.1 !important;
+                        overflow: visible !important;
                     }
                     
                     /* Andere Spalten kompakter */
