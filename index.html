@@ -2305,20 +2305,20 @@
                     <table style="width: 100%; border-collapse: collapse; border: 2px solid black; font-size: 7pt; margin-bottom: 20px;">
                         <thead>
                             <tr style="border-bottom: 2px solid black;">
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0; font-size: 7pt;">Datum</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0; font-size: 7pt;">VON</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0; font-size: 7pt;">BIS</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0; font-size: 7pt;">GESAMT</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 7pt;">Normal</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 7pt;">50%</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 7pt;">100%</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 7pt;">Datum</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 7pt;">VON</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 7pt;">BIS</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 7pt;">GESAMT</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 7%; background: #f0f0f0; font-size: 7pt;">Normal</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 7pt;">50%</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 7pt;">100%</th>
                                 <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 7pt;">100% frei</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Dienst</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Einsatzpauschalen</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Diäten</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Zeitausgleich</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 8%; background: #f0f0f0; font-size: 6pt;">Montagezulage</th>
-                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 12%; background: #f0f0f0; font-size: 6pt;">Ruhezeit</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">Dienst</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 5%; background: #f0f0f0; font-size: 6pt;">Einsatz</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">Diäten</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">Zeit-ausg.</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 6%; background: #f0f0f0; font-size: 6pt;">Montage</th>
+                                <th style="border: 1px solid black; padding: 2px; text-align: center; width: 16%; background: #f0f0f0; font-size: 6pt;">Ruhezeit</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2520,7 +2520,7 @@
 
         function printOfficialPDF() {
             const printTableDiv = document.getElementById('printTable');
-            if (printTableDiv.innerHTML === '') {
+            if (!printTableDiv || printTableDiv.innerHTML === '') {
                 alert('Bitte erst die Monatsauswertung durchführen.');
                 return;
             }
@@ -2536,68 +2536,128 @@
             const originalTitle = document.title;
             document.title = fileName;
             
+            // Verstecke alle anderen Elemente
+            document.querySelectorAll('body > *:not(#printTable)').forEach(el => {
+                el.style.display = 'none';
+            });
+            
             printTableDiv.style.display = 'block';
+            printTableDiv.style.position = 'static';
+            printTableDiv.style.width = '100%';
+            printTableDiv.style.margin = '0';
+            printTableDiv.style.padding = '0';
             
-            // Temporäre Styles für den Druck
-            const originalStyles = document.head.innerHTML;
-            document.head.innerHTML += `
-                <style media="print">
-                    body * { visibility: hidden; }
-                    #printTable, #printTable * { visibility: visible; }
-                    #printTable { 
-                        position: absolute; 
-                        left: 0; 
-                        top: 0; 
-                        width: 100%;
-                        max-height: 100vh;
-                        overflow: hidden;
+            // Entferne temporäre Styles
+            const existingPrintStyles = document.getElementById('temp-print-styles');
+            if (existingPrintStyles) {
+                existingPrintStyles.remove();
+            }
+            
+            // Füge optimierte Print-Styles hinzu
+            const printStyles = document.createElement('style');
+            printStyles.id = 'temp-print-styles';
+            printStyles.innerHTML = `
+                @media print {
+                    * {
+                        margin: 0 !important;
+                        padding: 0 !important;
+                        box-sizing: border-box !important;
                     }
-                    @page { 
-                        margin: 8mm; 
-                        size: A4;
+                    
+                    body {
+                        font-family: Arial, sans-serif !important;
+                        font-size: 8pt !important;
+                        line-height: 1.2 !important;
+                        background: white !important;
+                        color: black !important;
                     }
-                    @media print {
-                        html, body {
-                            height: 100vh;
-                            overflow: hidden;
-                        }
-                        * {
-                            page-break-after: avoid !important;
-                            page-break-before: avoid !important;
-                            page-break-inside: avoid !important;
-                        }
-                        /* Mobile PDF optimizations */
-                        table {
-                            font-size: 6pt !important;
-                            border-collapse: collapse !important;
-                        }
-                        td, th {
-                            padding: 1px !important;
-                            font-size: 6pt !important;
-                            white-space: nowrap !important;
-                        }
-                        /* Ruhezeit column specifically */
-                        td:last-child, th:last-child {
-                            min-width: 90px !important;
-                            width: 90px !important;
-                            font-size: 5pt !important;
-                        }
+                    
+                    @page {
+                        margin: 10mm !important;
+                        size: A4 !important;
                     }
-                </style>
+                    
+                    table {
+                        width: 100% !important;
+                        border-collapse: collapse !important;
+                        font-size: 6pt !important;
+                        page-break-inside: avoid !important;
+                    }
+                    
+                    th, td {
+                        border: 1px solid black !important;
+                        padding: 2px !important;
+                        font-size: 6pt !important;
+                        text-align: center !important;
+                        white-space: nowrap !important;
+                        overflow: visible !important;
+                    }
+                    
+                    /* Ruhezeit-Spalte extra breit */
+                    th:last-child, td:last-child {
+                        width: 16% !important;
+                        min-width: 120px !important;
+                        white-space: normal !important;
+                        font-size: 5pt !important;
+                        line-height: 1.1 !important;
+                    }
+                    
+                    /* Andere Spalten kompakter */
+                    th:nth-child(10), td:nth-child(10) { /* Einsatz */
+                        font-size: 5pt !important;
+                    }
+                    
+                    th:nth-child(12), td:nth-child(12) { /* Zeitausgleich */
+                        font-size: 5pt !important;
+                    }
+                    
+                    th:nth-child(13), td:nth-child(13) { /* Montagezulage */
+                        font-size: 5pt !important;
+                    }
+                }
+                
+                @media screen {
+                    body > *:not(#printTable) {
+                        display: none !important;
+                    }
+                    
+                    #printTable {
+                        display: block !important;
+                        width: 100% !important;
+                        margin: 0 !important;
+                        padding: 20px !important;
+                    }
+                }
             `;
+            document.head.appendChild(printStyles);
             
-            // Zeige Info-Dialog mit Dateinamen
+            // Warte bis Styles angewendet sind, dann drucke
             setTimeout(() => {
+                // Zeige Info-Dialog mit Dateinamen
                 alert(`💾 PDF-Dateiname:\n\n"${fileName}.pdf"\n\nWählen Sie im Druckdialog "Als PDF speichern" und verwenden Sie diesen Namen.`);
-                window.print();
+                
+                // Starke Print-Funktion
+                setTimeout(() => {
+                    window.print();
+                }, 500);
+                
+                // Cleanup nach dem Drucken
+                setTimeout(() => {
+                    // Stelle alles wieder her
+                    document.querySelectorAll('body > *:not(#printTable)').forEach(el => {
+                        el.style.display = '';
+                    });
+                    
+                    printTableDiv.style.display = 'none';
+                    document.title = originalTitle;
+                    
+                    // Entferne Print-Styles
+                    const tempStyles = document.getElementById('temp-print-styles');
+                    if (tempStyles) {
+                        tempStyles.remove();
+                    }
+                }, 3000);
             }, 100);
-            
-            // Styles zurücksetzen
-            setTimeout(() => {
-                printTableDiv.style.display = 'none';
-                document.head.innerHTML = originalStyles;
-                document.title = originalTitle; // Titel zurücksetzen
-            }, 2000);
         }
 
         function addTimeBlock() {
